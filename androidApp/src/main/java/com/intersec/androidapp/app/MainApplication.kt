@@ -1,0 +1,30 @@
+package com.intersec.androidapp.app
+
+import android.app.Application
+import com.google.firebase.Firebase
+import com.google.firebase.appcheck.appCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.initialize
+import com.intersec.androidapp.di.AppModule
+
+class MainApplication : Application() {
+    
+    companion object {
+        lateinit var appModule: AppModule
+            private set
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        
+        // Inicializa o Firebase
+        Firebase.initialize(context = this)
+
+        // Instala a factory do Play Integrity
+        Firebase.appCheck.installAppCheckProviderFactory(
+            PlayIntegrityAppCheckProviderFactory.getInstance()
+        )
+
+        appModule = AppModule()
+    }
+}
