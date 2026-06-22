@@ -22,7 +22,16 @@ data class CaptureRealtimeUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val errorDetail: String? = null,
-    val statusIndicator: StatusIndicator = StatusIndicator.IDLE
+    val statusIndicator: StatusIndicator = StatusIndicator.IDLE,
+    val neuralNodes: List<NeuralNodeModel> = emptyList()
+)
+
+data class NeuralNodeModel(
+    val id: String,
+    val x: Float, // 0.0 - 1.0
+    val y: Float, // 0.0 - 1.0
+    val intensity: Float, // 0.0 - 1.0
+    val connections: List<String>
 )
 
 data class RealtimePacketModel(

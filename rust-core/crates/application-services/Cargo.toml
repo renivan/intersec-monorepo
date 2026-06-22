@@ -15,6 +15,6 @@ use-cases = { path = "../use-cases" }
 core-types = { path = "../core-types" }
 protocol-engine = { path = "../protocol-engine" }
 flow-engine = { path = "../flow-engine" }
-pcap = "1.0"
 tokio = { version = "1.0", features = ["full"] }
 log = "0.4"
+# pcap removida temporariamente para permitir build em ambientes sem libs nativas Android

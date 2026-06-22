@@ -85,6 +85,10 @@ fun CaptureRealtimeScreen(
             CaptureHeader(state, onBack)
             Spacer(Modifier.height(8.dp))
             InterfaceNetworkCard(state)
+            
+            Spacer(Modifier.height(12.dp))
+            NeuralConnectivityMap(state)
+
             Spacer(Modifier.height(12.dp))
             CaptureFilterSection(state, viewModel)
             Spacer(Modifier.height(12.dp))
