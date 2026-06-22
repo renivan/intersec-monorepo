@@ -1,0 +1,13 @@
+[package]
+name = "mobile-bridge"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "mobile_bridge"
+path = "src/lib.rs"
+
+[dependencies]
+facade-api = { path = "../facade-api" }
+use-cases = { path = "../use-cases" }
+core-types = { path = "../core-types" }

@@ -1,0 +1,12 @@
+[package]
+name = "bridge-runtime"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "bridge_runtime"
+path = "src/lib.rs"
+
+[dependencies]
+android-adapter = { path = "../android-adapter" }
+ios-adapter = { path = "../ios-adapter" }

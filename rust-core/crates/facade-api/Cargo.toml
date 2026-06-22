@@ -1,0 +1,16 @@
+[package]
+name = "facade-api"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "facade_api"
+path = "src/lib.rs"
+
+[dependencies]
+application-services = { path = "../application-services" }
+query-engine = { path = "../query-engine" }
+storage = { path = "../storage" }
+session-manager = { path = "../session-manager" }
+use-cases = { path = "../use-cases" }
+core-types = { path = "../core-types" }

@@ -1,0 +1,20 @@
+[package]
+name = "application-services"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "application_services"
+path = "src/lib.rs"
+
+[dependencies]
+query-engine = { path = "../query-engine" }
+session-manager = { path = "../session-manager" }
+storage = { path = "../storage" }
+use-cases = { path = "../use-cases" }
+core-types = { path = "../core-types" }
+protocol-engine = { path = "../protocol-engine" }
+flow-engine = { path = "../flow-engine" }
+pcap = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+log = "0.4"
