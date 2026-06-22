@@ -175,6 +175,20 @@ pub fn track_flows(packets: &[ParsedPacket]) -> Result<Vec<FlowAggregate>, FlowE
     Ok(tracker.into_flows())
 }
 
+pub fn update_flows(flows: &mut Vec<FlowAggregate>, packets: &[ParsedPacket]) -> Result<(), FlowEngineError> {
+    let mut tracker = FlowTracker::new();
+    for flow in flows.drain(..) {
+        tracker.flows.insert(flow.key.clone(), flow);
+    }
+
+    for packet in packets {
+        tracker.ingest(packet)?;
+    }
+
+    *flows = tracker.into_flows();
+    Ok(())
+}
+
 fn estimate_payload_len(packet: &ParsedPacket) -> usize {
     if packet
         .nodes
