@@ -10,12 +10,15 @@ import com.intersec.androidapp.di.AppModule
 class MainApplication : Application() {
     
     companion object {
+        lateinit var instance: MainApplication
+            private set
         lateinit var appModule: AppModule
             private set
     }
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         
         // Inicializa o Firebase
         Firebase.initialize(context = this)

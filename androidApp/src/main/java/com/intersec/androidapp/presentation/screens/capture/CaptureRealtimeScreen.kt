@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,6 +45,21 @@ fun CaptureRealtimeScreen(
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             viewModel.onVpnAuthorized()
         }
+    }
+
+    if (state.showVpnTerms) {
+        VpnTermsDialog(
+            onAccept = {
+                viewModel.acceptVpnTerms()
+                val intent = VpnService.prepare(context)
+                if (intent != null) {
+                    vpnLauncher.launch(intent)
+                } else {
+                    viewModel.onVpnAuthorized()
+                }
+            },
+            onDismiss = { viewModel.clearError() }
+        )
     }
 
     if (state.errorMessage == "ERRO_SEM_ROOT") {
@@ -91,12 +107,14 @@ fun CaptureRealtimeScreen(
 
             Spacer(Modifier.height(12.dp))
             CaptureFilterSection(state, viewModel)
+            
             Spacer(Modifier.height(12.dp))
             CaptureControlsSection(state, viewModel)
+            
             Spacer(Modifier.height(12.dp))
             CaptureStatusSection(state)
             Spacer(Modifier.height(12.dp))
-            PacketsListSection(state, viewModel)
+            PacketsListSection(state)
         }
     }
 }
@@ -150,8 +168,10 @@ fun CaptureHeader(state: CaptureRealtimeUiState, onBack: () -> Unit) {
 
 @Composable
 fun InterfaceNetworkCard(state: CaptureRealtimeUiState) {
+    var showInterfaceDialog by remember { mutableStateOf(false) }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { showInterfaceDialog = true },
         colors = CardDefaults.cardColors(
             containerColor = PacketColorPalette.CARD_BACKGROUND
         ),
@@ -164,14 +184,95 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("INTERFACE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text(state.networkInterface, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(state.networkInterface, color = Color.Cyan, fontWeight = FontWeight.Bold)
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text("REDE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text("TIPO DE REDE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                 Text(state.networkName, color = Color.White, fontWeight = FontWeight.Bold)
             }
+            Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = Color.White.copy(alpha = 0.3f))
         }
     }
+
+    if (showInterfaceDialog) {
+        AlertDialog(
+            onDismissRequest = { showInterfaceDialog = false },
+            title = { Text("Selecionar Interface de Monitoramento") },
+            text = {
+                LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                    items(state.availableInterfaces) { info ->
+                        ListItem(
+                            headlineContent = { Text(info.interfaceName, fontWeight = FontWeight.Bold) },
+                            supportingContent = { Text("${info.typeName} - ${info.details}") },
+                            leadingContent = { 
+                                val icon = when(info.typeName) {
+                                    "Wi-Fi" -> Icons.Default.Wifi
+                                    "Ethernet" -> Icons.Default.SettingsInputHdmi
+                                    else -> Icons.Default.SignalCellularAlt
+                                }
+                                Icon(icon, contentDescription = null)
+                            },
+                            trailingContent = {
+                                if (state.networkInterface == info.interfaceName) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.Cyan)
+                                }
+                            },
+                            modifier = Modifier.clickable { 
+                                // viewModel.onInterfaceSelected(info.interfaceName, info.typeName)
+                                showInterfaceDialog = false 
+                            }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showInterfaceDialog = false }) { Text("FECHAR") }
+            }
+        )
+    }
+}
+
+@Composable
+fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("🛡️ Autorização do Túnel Sentinel") },
+        text = {
+            Column {
+                Text(
+                    "Para realizar a análise em tempo real, o interSec precisa criar um túnel VPN local.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "• Seus dados NÃO saem do dispositivo.\n" +
+                    "• O motor Rust processa tudo localmente.\n" +
+                    "• Isso permite detectar invasões e vazamentos.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Ao aceitar, você verá um ícone de chave na barra de status.",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onAccept,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black)
+            ) {
+                Text("ACEITAR E ATIVAR")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("CANCELAR")
+            }
+        }
+    )
 }
 
 @Composable
@@ -216,7 +317,13 @@ fun CaptureControlsSection(
     ) {
         if (!state.isCapturing) {
             Button(
-                onClick = { viewModel.startCapture() },
+                onClick = { 
+                    if (!state.isVpnAuthorized) {
+                        viewModel.requestVpnAuthorization()
+                    } else {
+                        viewModel.startCapture()
+                    }
+                },
                 modifier = Modifier.weight(1f).height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)),
                 shape = RoundedCornerShape(8.dp)
@@ -288,7 +395,7 @@ fun CaptureStatusSection(state: CaptureRealtimeUiState) {
 }
 
 @Composable
-fun PacketsListSection(state: CaptureRealtimeUiState, viewModel: CaptureRealtimeViewModel) {
+fun PacketsListSection(state: CaptureRealtimeUiState) {
     var showFlows by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
@@ -324,15 +431,6 @@ fun PacketsListSection(state: CaptureRealtimeUiState, viewModel: CaptureRealtime
                         PacketRow(packet)
                     }
                 }
-            }
-        }
-        
-        if (!state.isCapturing) {
-            TextButton(
-                onClick = { viewModel.runForcedTest() },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text("EXECUTAR TESTE DE DETECÇÃO FORÇADO", fontSize = 10.sp, color = Color.White.copy(alpha = 0.3f))
             }
         }
     }

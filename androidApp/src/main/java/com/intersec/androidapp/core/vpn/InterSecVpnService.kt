@@ -29,11 +29,12 @@ class InterSecVpnService : VpnService() {
         try {
             val builder = Builder()
                 .setSession("InterSec Sentinel")
-                .addAddress("10.8.0.1", 32)
-                .addRoute("0.0.0.0", 0) // Intercepta tudo
+                .addAddress("10.8.0.2", 32)
+                .addRoute("0.0.0.0", 0) 
                 .addDnsServer("8.8.8.8")
                 .setMtu(1500)
-                .setBlocking(false) // Deixa o Rust gerenciar o bloqueio se necessário
+                .addDisallowedApplication(packageName) // REGRA DE OURO: Evita loop infinito
+                .setBlocking(false)
 
             vpnInterface = builder.establish()
             

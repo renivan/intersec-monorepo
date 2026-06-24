@@ -5,7 +5,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,7 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -105,8 +103,9 @@ fun NeuralConnectivityMap(state: CaptureRealtimeUiState) {
 
             Text(
                 "CORE ANALYTICS ACTIVE",
-                color = Color.White.copy(alpha = 0.4f),
+                color = Color.Cyan.copy(alpha = 0.6f),
                 fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.BottomEnd)
             )
         }

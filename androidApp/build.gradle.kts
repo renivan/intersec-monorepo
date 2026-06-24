@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
 }
@@ -36,6 +35,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    dependenciesInfo {
+        includeInBundle = false
+        includeInApk = false
+    }
+    ndkVersion = "30.0.14904198 rc1"
+    buildToolsVersion = "36.1.0"
 }
 
 kotlin {
@@ -71,7 +76,7 @@ dependencies {
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.storage)
     implementation(libs.kotlinx.coroutines.play.services)
-    implementation(libs.firebase.common.ktx)
+    implementation(libs.firebase.common)
     
     debugImplementation(libs.androidx.compose.ui.tooling)
 

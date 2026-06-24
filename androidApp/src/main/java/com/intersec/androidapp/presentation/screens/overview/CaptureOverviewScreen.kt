@@ -12,16 +12,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.data.model.dto.*
+import com.intersec.androidapp.presentation.state.PacketColorPalette
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 
 /**
  * Tela de Overview do Tráfego (Fase 2 - Evolução Master)
- * Refatorada para Material 3 Dynamic Colors e Visual "Neural Map" Detalhado.
+ * Refatorada para o Tema Master Navy/Cyan.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -41,17 +43,21 @@ fun CaptureOverviewScreen(
     }
 
     Scaffold(
+        containerColor = PacketColorPalette.BACKGROUND_DARK,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Network Neural Intelligence") },
+                title = { Text("Network Neural Intelligence", color = Color.White, fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = PacketColorPalette.BACKGROUND_DARK
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color.White)
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.refreshActiveSession() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Atualizar")
+                        Icon(Icons.Default.Refresh, contentDescription = "Atualizar", tint = Color.White)
                     }
                 }
             )
@@ -61,6 +67,7 @@ fun CaptureOverviewScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .background(PacketColorPalette.BACKGROUND_DARK)
                 .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
@@ -82,14 +89,14 @@ fun CaptureOverviewScreen(
                         label = "Pacotes Totais",
                         value = state.session?.packetCount?.toString() ?: "0",
                         icon = Icons.Default.Inventory2,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color.Cyan
                     )
                     OverviewMiniCard(
                         modifier = Modifier.weight(1f),
                         label = "Fluxos Ativos",
                         value = state.session?.flowCount?.toString() ?: "0",
                         icon = Icons.Default.Route,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = Color.White
                     )
                 }
                 Spacer(Modifier.height(8.dp))
@@ -99,7 +106,7 @@ fun CaptureOverviewScreen(
                         label = "Volume de Dados",
                         value = formatVolume(overview.totalVolumeBytes),
                         icon = Icons.Default.BarChart,
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = Color.Cyan
                     )
                     OverviewMiniCard(
                         modifier = Modifier.weight(1f),
@@ -116,7 +123,7 @@ fun CaptureOverviewScreen(
             // ===== TOP COMUNICAÇÕES (DETALHAMENTO DE PACOTES/IP) =====
             SectionHeader("Top Talkers (Comunicações Críticas)")
             if (state.overview?.topCommunications?.isEmpty() == true) {
-                Text("Aguardando detecção de fluxos...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Aguardando detecção de fluxos...", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.5f))
             } else {
                 state.overview?.topCommunications?.forEach { comm ->
                     CommunicationItem(comm)
@@ -128,7 +135,7 @@ fun CaptureOverviewScreen(
             // ===== PROTOCOLOS & SEGURANÇA =====
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 SectionHeader("Protocolos")
-                Text("Segurança", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                Text("Segurança", style = MaterialTheme.typography.labelSmall, color = Color.Cyan)
             }
             
             state.overview?.let { overview ->
@@ -147,15 +154,25 @@ fun CaptureOverviewScreen(
 
             // ===== AÇÕES TÁTICAS =====
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onOpenFlows, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) {
-                    Icon(Icons.Default.SwapHoriz, contentDescription = null)
+                Button(
+                    onClick = onOpenFlows, 
+                    modifier = Modifier.weight(1f), 
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
+                ) {
+                    Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = Color.Cyan)
                     Spacer(Modifier.width(8.dp))
-                    Text("Fluxos")
+                    Text("Fluxos", color = Color.White)
                 }
-                FilledTonalButton(onClick = onOpenPackets, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) {
-                    Icon(Icons.Default.List, contentDescription = null)
+                FilledTonalButton(
+                    onClick = onOpenPackets, 
+                    modifier = Modifier.weight(1f), 
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
+                ) {
+                    Icon(Icons.Default.List, contentDescription = null, tint = Color.White)
                     Spacer(Modifier.width(8.dp))
-                    Text("Pacotes")
+                    Text("Pacotes", color = Color.White)
                 }
             }
             
@@ -164,12 +181,12 @@ fun CaptureOverviewScreen(
             Button(
                 onClick = onOpenGeoMap,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155)),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.Public, contentDescription = null)
+                Icon(Icons.Default.Public, contentDescription = null, tint = Color.Cyan)
                 Spacer(Modifier.width(8.dp))
-                Text("Visualizar Mapa Geográfico")
+                Text("Visualizar Mapa Geográfico", color = Color.White)
             }
             
             Spacer(Modifier.height(8.dp))
@@ -177,7 +194,7 @@ fun CaptureOverviewScreen(
             Button(
                 onClick = onOpenSecurity,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.2f), contentColor = Color.Red),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(Icons.Default.Shield, contentDescription = null)
@@ -194,6 +211,7 @@ fun CaptureOverviewScreen(
 fun SectionHeader(title: String) {
     Text(
         text = title,
+        color = Color.White,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(bottom = 12.dp)
@@ -204,21 +222,21 @@ fun SectionHeader(title: String) {
 fun CommunicationItem(comm: CommunicationDto) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+        colors = CardDefaults.cardColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.Cyan.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Cyan)
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("${comm.source} ↔ ${comm.destination}", style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
+                Text("${comm.source} ↔ ${comm.destination}", color = Color.White, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
                 Row {
-                    Text("${comm.packetCount} pacotes", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${comm.packetCount} pacotes", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                     Spacer(Modifier.width(8.dp))
-                    Text("•", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("•", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                     Spacer(Modifier.width(8.dp))
-                    Text(formatVolume(comm.volumeBytes), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(formatVolume(comm.volumeBytes), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                 }
             }
         }
@@ -237,14 +255,20 @@ fun ProtocolFlowGrid(protocols: List<ProtocolStatDto>) {
             FilterChip(
                 selected = proto.isPredominant,
                 onClick = {},
-                label = { Text(proto.name) },
+                label = { Text(proto.name, color = Color.White) },
                 leadingIcon = {
-                    if (proto.isSecure) Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(14.dp))
-                    else Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(14.dp))
+                    if (proto.isSecure) Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Cyan)
+                    else Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White.copy(alpha = 0.5f))
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    selectedContainerColor = Color.Cyan.copy(alpha = 0.2f),
+                    containerColor = PacketColorPalette.CARD_BACKGROUND,
+                    labelColor = Color.White
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    borderColor = Color.White.copy(alpha = 0.1f),
+                    enabled = true,
+                    selected = proto.isPredominant
                 )
             )
         }
@@ -256,8 +280,8 @@ fun IntelligenceEventRow(event: String) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Cyan)
         Spacer(Modifier.width(12.dp))
-        Text(event, style = MaterialTheme.typography.bodySmall)
+        Text(event, color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
     }
 }

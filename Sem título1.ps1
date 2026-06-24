@@ -34,7 +34,7 @@ Cargo.lock
 "@ | Out-File -FilePath .gitignore -Encoding utf8
 
 # 2) README.md básico
-@"
+
 # wireshark_mobile_core_rust
 
 Projeto Rust - núcleo mobile (wireshark_mobile_core_rust).

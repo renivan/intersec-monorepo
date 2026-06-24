@@ -27,6 +27,7 @@ version = "0.1.0"
 dependencies = [
  "core-types",
  "flow-engine",
+ "libc",
  "log",
  "protocol-engine",
  "query-engine",

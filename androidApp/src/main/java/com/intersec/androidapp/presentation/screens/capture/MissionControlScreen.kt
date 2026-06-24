@@ -22,8 +22,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.painterResource
+import com.intersec.androidapp.R
 import com.intersec.androidapp.core.file.AndroidCaptureImporter
 import com.intersec.androidapp.presentation.screens.overview.NeuralMapVisual
+import com.intersec.androidapp.presentation.state.PacketColorPalette
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 
 /**
@@ -56,25 +59,47 @@ fun MissionControlScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(PacketColorPalette.BACKGROUND_DARK)
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
+        // ===== BRANDING & STATUS =====
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_neural_core),
+                contentDescription = "Logo",
+                modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp))
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                "interSec Mission Control",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
+        
+        Spacer(Modifier.height(16.dp))
+
         // ===== IDENTIFICADOR DE REDE & ENTROPIA =====
         NetworkStatusSection(state.session != null, state.overview?.averageRiskScore ?: 0)
 
         Spacer(Modifier.height(16.dp))
         
         // Pulso Neural (Mini Visualização do Core Rust)
-        NeuralMapVisual(modifier = Modifier.height(100.dp).fillMaxWidth())
+        NeuralMapVisual(modifier = Modifier.height(150.dp).fillMaxWidth())
 
         Spacer(Modifier.height(24.dp))
 
-        Text("Ações de Captura", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("Ações de Captura", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
         QuickModeButton(
             "Captura Real-time", 
             Icons.Default.Videocam, 
-            MaterialTheme.colorScheme.primary, 
+            Color.Cyan, 
             Modifier.fillMaxWidth(),
             onOpenCaptureRealtime
         )
@@ -82,7 +107,7 @@ fun MissionControlScreen(
         Spacer(Modifier.height(24.dp))
 
         // ===== GRID TÁTICO DE ANÁLISE =====
-        Text("Análise & Inteligência", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("Análise & Inteligência", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
 
         LazyVerticalGrid(
@@ -91,10 +116,10 @@ fun MissionControlScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.height(240.dp) 
         ) {
-            item { TacticalCard("Fluxos", "Canais Ativos", Icons.Default.SwapHoriz, MaterialTheme.colorScheme.tertiary, onOpenFlows) }
-            item { TacticalCard("Pacotes", "X-Ray Detail", Icons.Default.List, MaterialTheme.colorScheme.secondary, onOpenPackets) }
-            item { TacticalCard("Overview", "Neural Map", Icons.Default.Assessment, MaterialTheme.colorScheme.primary, onOpenOverview) }
-            item { TacticalCard("Segurança", "Relatório SOC", Icons.Default.Shield, MaterialTheme.colorScheme.error, onOpenSecurity) }
+            item { TacticalCard("Fluxos", "Canais Ativos", Icons.Default.SwapHoriz, Color.Cyan, onOpenFlows) }
+            item { TacticalCard("Pacotes", "X-Ray Detail", Icons.Default.List, Color.LightGray, onOpenPackets) }
+            item { TacticalCard("Overview", "Neural Map", Icons.Default.Assessment, Color.Cyan, onOpenOverview) }
+            item { TacticalCard("Segurança", "Relatório SOC", Icons.Default.Shield, Color.Red, onOpenSecurity) }
         }
 
         Spacer(Modifier.height(24.dp))
@@ -104,7 +129,7 @@ fun MissionControlScreen(
             onClick = { filePicker.launch(arrayOf("*/*")) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, contentColor = MaterialTheme.colorScheme.onSurface)
+            colors = ButtonDefaults.buttonColors(containerColor = PacketColorPalette.CARD_BACKGROUND, contentColor = Color.White)
         ) {
             Icon(Icons.Default.FileUpload, contentDescription = null)
             Spacer(Modifier.width(8.dp))
@@ -124,7 +149,7 @@ fun MissionControlScreen(
         Spacer(Modifier.height(24.dp))
 
         // ===== BEHAVIORAL ALERTS (DADOS REAIS DO MOTOR RUST) =====
-        Text("Inteligência de Comportamento", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("Inteligência de Comportamento", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         
         val events = state.overview?.events ?: emptyList()
@@ -132,7 +157,7 @@ fun MissionControlScreen(
             Text(
                 "Nenhum comportamento suspeito detectado.", 
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.5f),
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         } else {
@@ -144,7 +169,7 @@ fun MissionControlScreen(
         }
 
         if (state.isLoading) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp))
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp), color = Color.Cyan)
         }
 
         Spacer(Modifier.height(40.dp))
@@ -155,7 +180,7 @@ fun MissionControlScreen(
 fun NetworkStatusSection(isCapturing: Boolean, riskScore: Int = 0) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+        colors = CardDefaults.cardColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -165,14 +190,14 @@ fun NetworkStatusSection(isCapturing: Boolean, riskScore: Int = 0) {
                 CircularProgressIndicator(
                     progress = { if (isCapturing) (100 - riskScore) / 100f else 0f },
                     modifier = Modifier.size(50.dp),
-                    color = if (riskScore > 50) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    color = if (riskScore > 50) Color.Red else Color.Cyan,
                     strokeWidth = 5.dp
                 )
                 Icon(
                     if (isCapturing) Icons.Default.Wifi else Icons.Default.WifiOff,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
-                    tint = if (riskScore > 50) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    tint = if (riskScore > 50) Color.Red else Color.Cyan
                 )
             }
 
@@ -182,12 +207,13 @@ fun NetworkStatusSection(isCapturing: Boolean, riskScore: Int = 0) {
                 Text(
                     text = if (isCapturing) "wlan0 (Wi-Fi Conectado)" else "Aguardando Interface",
                     style = MaterialTheme.typography.titleSmall,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = if (isCapturing) "Integridade da Rede: ${100 - riskScore}%" else "Entropia: --",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.6f)
                 )
             }
         }
@@ -199,7 +225,11 @@ fun QuickModeButton(label: String, icon: ImageVector, color: Color, modifier: Mo
     FilledTonalButton(
         onClick = onClick,
         modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = PacketColorPalette.CARD_BACKGROUND,
+            contentColor = Color.White
+        )
     ) {
         Icon(icon, contentDescription = null, tint = color)
         Spacer(Modifier.width(8.dp))
@@ -213,7 +243,7 @@ fun TacticalCard(title: String, subtitle: String, icon: ImageVector, color: Colo
     Card(
         onClick = onClick,
         modifier = Modifier.height(110.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+        colors = CardDefaults.cardColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(12.dp),
@@ -222,8 +252,8 @@ fun TacticalCard(title: String, subtitle: String, icon: ImageVector, color: Colo
         ) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
             Spacer(Modifier.height(4.dp))
-            Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, color = Color.White, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
         }
     }
 }
@@ -232,20 +262,20 @@ fun TacticalCard(title: String, subtitle: String, icon: ImageVector, color: Colo
 fun ActiveSessionPanel(sourceName: String, packetCount: Long, onClear: () -> Unit, onLogs: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
+        colors = CardDefaults.cardColors(containerColor = Color.Cyan.copy(alpha = 0.1f))
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Adjust, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Adjust, contentDescription = null, tint = Color.Cyan, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(sourceName, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                Text("$packetCount pacotes", style = MaterialTheme.typography.labelSmall)
+                Text(sourceName, color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text("$packetCount pacotes", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
             }
-            IconButton(onClick = onLogs) { Icon(Icons.Default.Terminal, contentDescription = "Logs", modifier = Modifier.size(18.dp)) }
-            IconButton(onClick = onClear) { Icon(Icons.Default.Delete, contentDescription = "Clear", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
+            IconButton(onClick = onLogs) { Icon(Icons.Default.Terminal, contentDescription = "Logs", tint = Color.White, modifier = Modifier.size(18.dp)) }
+            IconButton(onClick = onClear) { Icon(Icons.Default.Delete, contentDescription = "Clear", tint = Color.Red, modifier = Modifier.size(18.dp)) }
         }
     }
 }
@@ -257,15 +287,15 @@ fun BehaviorAlertItem(target: String, alert: String, color: Color) {
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(PacketColorPalette.CARD_BACKGROUND)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
         Spacer(Modifier.width(12.dp))
         Column {
-            Text(target, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-            Text(alert, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(target, color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            Text(alert, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
         }
     }
 }

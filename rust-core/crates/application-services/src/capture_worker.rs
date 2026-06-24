@@ -1,8 +1,9 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
 use session_manager::SessionManager;
-use protocol_engine::decode_packet;
+use protocol_engine::{decode_packet, DataLinkMode};
 use core_types::PacketRecord;
+use std::os::unix::io::RawFd;
 
 pub struct CaptureWorker {
     sessions: Arc<Mutex<SessionManager>>,
@@ -18,7 +19,26 @@ impl CaptureWorker {
         Err("Captura direta (PCAP) requer libpcap. Use o Modo VPN Sentinel.".into())
     }
 
+    /// Valida se o FD é um canal de rede ativo no Kernel do Android
+    fn validate_fd(fd: RawFd) -> Result<(), String> {
+        #[cfg(unix)]
+        {
+            use libc::{fcntl, F_GETFL};
+            let flags = unsafe { fcntl(fd, F_GETFL) };
+            if flags == -1 {
+                return Err(format!("Falha Crítica de FD: {} não é um descritor válido.", fd));
+            }
+            log::info!("Master Check: File Descriptor {} validado com sucesso.", fd);
+            Ok(())
+        }
+        #[cfg(not(unix))]
+        { Ok(()) }
+    }
+
     pub fn start_vpn_capture(&self, fd: i32) -> Result<(), String> {
+        // Passo 1: Validação Master antes de iniciar a thread
+        Self::validate_fd(fd as RawFd)?;
+
         let sessions = self.sessions.clone();
 
         thread::spawn(move || {
@@ -30,10 +50,12 @@ impl CaptureWorker {
 
                 // Segurança: VpnService FD é um canal de leitura de pacotes IP brutos
                 let mut file = unsafe { File::from_raw_fd(fd) };
-                let mut buffer = [0u8; 65535];
+
+                // Buffer Otimizado (MTU 1500 + Margem)
+                let mut buffer = [0u8; 2048];
                 let mut packet_count = 0;
 
-                log::info!("Motor Rust: Escutando tráfego no túnel VPN (FD {})...", fd);
+                log::info!("Motor Rust: Túnel Ativo. Iniciando processamento de fluxo...");
 
                 loop {
                     match file.read(&mut buffer) {
@@ -50,12 +72,13 @@ impl CaptureWorker {
                                 ),
                                 captured_length: n as u32,
                                 original_length: n as u32,
-                                link_type: Some(101), // Raw IP (Padrão Android VPN)
+                                link_type: Some(101), // Raw IP
                                 raw_data,
                                 read_warnings: Vec::new(),
                             };
 
-                            if let Ok(parsed) = decode_packet(&record) {
+                            // IMPORTANTE: Aqui usamos DataLinkMode::RawIP para VPN
+                            if let Ok(parsed) = decode_packet(&record, &DataLinkMode::RawIP) {
                                 let mut manager = sessions.lock().unwrap();
                                 let _ = manager.push_packet(parsed);
 
@@ -65,9 +88,12 @@ impl CaptureWorker {
                                 }
                             }
                         }
-                        Ok(_) => break, // EOF
+                        Ok(_) => {
+                            log::warn!("Motor Rust: Fim do fluxo no túnel.");
+                            break;
+                        }
                         Err(e) => {
-                            log::error!("Erro na leitura do túnel: {}", e);
+                            log::error!("Erro Crítico de Leitura no FD {}: {}", fd, e);
                             break;
                         }
                     }

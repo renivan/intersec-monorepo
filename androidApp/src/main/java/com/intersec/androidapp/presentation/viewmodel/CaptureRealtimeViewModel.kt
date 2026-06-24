@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.intersec.androidapp.di.AppBootstrap
 import com.intersec.androidapp.domain.repository.RustAnalysisRepository
+import com.intersec.androidapp.core.network.NetworkInspector
+import com.intersec.androidapp.app.MainApplication
 import com.intersec.androidapp.presentation.state.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,25 +34,60 @@ class CaptureRealtimeViewModel(
     private var timerJob: Job? = null
     private var sessionId: String? = null
 
-    fun startCapture(networkInterface: String = "wlan0") {
+    init {
+        detectNetwork()
+    }
+
+    private fun detectNetwork() {
+        val info = NetworkInspector.getActiveNetworkInfo(MainApplication.instance)
+        val allInterfaces = NetworkInspector.getAvailableInterfaces()
+        _uiState.update { 
+            it.copy(
+                networkInterface = info.interfaceName,
+                networkName = "${info.typeName} - ${info.details}",
+                availableInterfaces = allInterfaces
+            )
+        }
+    }
+
+    fun onInterfaceSelected(name: String, type: String) {
+        _uiState.update { it.copy(networkInterface = name, networkName = type) }
+    }
+
+    fun requestVpnAuthorization() {
+        _uiState.update { it.copy(showVpnTerms = true) }
+    }
+
+    fun acceptVpnTerms() {
+        _uiState.update { it.copy(showVpnTerms = false) }
+        // O acionamento real da intent de VPN será feito na View via callback
+    }
+
+    fun startCapture(networkInterface: String = _uiState.value.networkInterface) {
         if (_uiState.value.isCapturing) return
         val filter = _uiState.value.filterInput
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             
+            // Tenta wlan0 (Wi-Fi real) e fallback para eth0 (emulador/ethernet)
             repository.startCapture(networkInterface, filter).fold(
                 onSuccess = { id ->
                     onCaptureStarted(id, networkInterface, filter)
                 },
-                onFailure = { e ->
-                    _uiState.update { 
-                        it.copy(
-                            isLoading = false, 
-                            errorMessage = "ERRO_SEM_ROOT",
-                            errorDetail = e.message 
-                        )
-                    }
+                onFailure = { 
+                    repository.startCapture("eth0", filter).fold(
+                        onSuccess = { id -> onCaptureStarted(id, "eth0", filter) },
+                        onFailure = { e ->
+                            _uiState.update { 
+                                it.copy(
+                                    isLoading = false, 
+                                    errorMessage = "ERRO_SEM_ROOT",
+                                    errorDetail = e.message 
+                                )
+                            }
+                        }
+                    )
                 }
             )
         }
@@ -200,37 +237,6 @@ class CaptureRealtimeViewModel(
             while (isActive && _uiState.value.isCapturing) {
                 delay(1.seconds)
                 _uiState.update { it.copy(elapsedSeconds = it.elapsedSeconds + 1) }
-            }
-        }
-    }
-
-    fun runForcedTest() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            delay(500.milliseconds)
-            
-            val testPackets = listOf(
-                RealtimePacketModel(
-                    number = 999,
-                    timestampSeconds = 0.0,
-                    sourceAddress = "ATTACKER",
-                    destinationAddress = "LOCAL",
-                    protocol = "TCP",
-                    flags = "SYN",
-                    size = 64,
-                    info = "[FORCED TEST] Possível Port Scan Detectado",
-                    colorType = PacketColorType.TCP_SYN,
-                    isAnomalous = true
-                )
-            )
-            
-            _uiState.update { state ->
-                state.copy(
-                    isLoading = false,
-                    packets = (state.packets + testPackets).takeLast(100),
-                    statusIndicator = StatusIndicator.ACTIVE,
-                    errorMessage = "TESTE_FORCADO_OK"
-                )
             }
         }
     }

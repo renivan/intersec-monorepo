@@ -1,10 +1,15 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    id("com.android.library")
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    androidTarget {
+    android {
+        namespace = "com.intersec.shared"
+        compileSdk = 37
+        minSdk = 24
+        
+        withHostTestBuilder {}.configure {}
     }
     
     listOf(
@@ -25,17 +30,15 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.junit)
         }
-    }
-}
-
-android {
-    namespace = "com.intersec.shared"
-    compileSdk = 37
-    defaultConfig {
-        minSdk = 24
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        
+        androidMain.dependencies {
+            // Android-specific dependencies
+        }
+        
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.junit)
+            }
+        }
     }
 }

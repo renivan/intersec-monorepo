@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.intersec.androidapp.presentation.state.PacketColorPalette
 import java.util.Locale
 
 @Composable
@@ -23,11 +24,11 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+            .background(PacketColorPalette.CARD_BACKGROUND.copy(alpha = 0.5f))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
     ) {
-        val primaryColor = MaterialTheme.colorScheme.primary
-        val secondaryColor = MaterialTheme.colorScheme.secondary
+        val primaryColor = Color.Cyan
+        val secondaryColor = Color.White
         
         Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             val center = Offset(size.width / 2, size.height / 2)
@@ -61,7 +62,7 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
                     strokeWidth = 1.dp.toPx()
                 )
 
-                // Data Pulse (Moving point on line)
+                // Data Pulse (Moving point on-line)
                 val pulsePos = Offset(
                     center.x + (radius * 0.6f) * kotlin.math.cos(angle),
                     center.y + (radius * 0.6f) * kotlin.math.sin(angle)
@@ -78,7 +79,7 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
             modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+            color = Color.White.copy(alpha = 0.4f)
         )
     }
 }

@@ -2,12 +2,11 @@ use std::fmt;
 
 use capture_reader::CaptureReaderError;
 use flow_engine::FlowEngineError;
-use protocol_engine::ProtocolEngineError;
 
 #[derive(Debug)]
 pub enum UseCasesError {
     CaptureReader(CaptureReaderError),
-    ProtocolEngine(ProtocolEngineError),
+    ProtocolEngine(String),
     FlowEngine(FlowEngineError),
     PacketNotFound(u64),
     FlowNotFound(String),
@@ -32,12 +31,6 @@ impl std::error::Error for UseCasesError {}
 impl From<CaptureReaderError> for UseCasesError {
     fn from(value: CaptureReaderError) -> Self {
         Self::CaptureReader(value)
-    }
-}
-
-impl From<ProtocolEngineError> for UseCasesError {
-    fn from(value: ProtocolEngineError) -> Self {
-        Self::ProtocolEngine(value)
     }
 }
 

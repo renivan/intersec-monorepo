@@ -17,4 +17,4 @@ protocol-engine = { path = "../protocol-engine" }
 flow-engine = { path = "../flow-engine" }
 tokio = { version = "1.0", features = ["full"] }
 log = "0.4"
-# pcap removida temporariamente para permitir build em ambientes sem libs nativas Android
+libc = "0.2"

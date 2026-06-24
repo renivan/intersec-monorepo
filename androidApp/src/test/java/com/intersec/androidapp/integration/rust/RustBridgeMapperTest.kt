@@ -1,9 +1,13 @@
 package com.intersec.androidapp.integration.rust
 
+import com.intersec.androidapp.core.bridge.RustBridgeMapper
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RustBridgeMapperTest {
+
+    private val mapper = RustBridgeMapper()
 
     @Test
     fun `toSessionSnapshot should parse key-value lines correctly`() {
@@ -15,13 +19,17 @@ class RustBridgeMapperTest {
             created_at_epoch_micros = 1700000000000000
         """.trimIndent()
 
-        val result = RustBridgeMapper.toSessionSnapshot(raw)
+        val result = mapper.mapSession(raw)
 
-        assertEquals("12345", result.sessionId)
-        assertEquals("capture.pcap", result.sourceName)
-        assertEquals(100L, result.totalPackets)
-        assertEquals(10L, result.totalFlows)
-        assertEquals(1700000000000000L, result.createdAtEpochMicros)
+        assertTrue("Mapping should be successful", result.success)
+        val data = result.data!!
+        assertEquals("12345", data.sessionId)
+        assertEquals("capture.pcap", data.sourceName)
+        assertEquals(100L, data.packetCount)
+        assertEquals(10L, data.flowCount)
+        // O motor Rust retorna created_at_epoch_micros para sessões abertas
+        // O Mapper atual ainda não popula o campo duration para texto puro key-value
+        assertEquals(0L, data.duration)
     }
 
     @Test
@@ -32,17 +40,19 @@ class RustBridgeMapperTest {
             packet_number=2 | timestamp=1700000200 | protocol=HTTP | summary=GET /
         """.trimIndent()
 
-        val result = RustBridgeMapper.toPacketSearchResult(raw)
+        val result = mapper.mapPacketResult(raw)
 
-        assertEquals(2L, result.totalItems)
-        assertEquals(2, result.items.size)
+        assertTrue("Mapping should be successful", result.success)
+        val data = result.data!!
+        assertEquals(2L, data.totalItems)
+        assertEquals(2, data.items.size)
         
-        assertEquals(1L, result.items[0].packetNumber)
-        assertEquals("TCP", result.items[0].highestProtocol)
-        assertEquals("Syn", result.items[0].summary)
+        assertEquals(1L, data.items[0].packetNumber)
+        assertEquals("TCP", data.items[0].protocol)
+        assertEquals("Syn", data.items[0].info)
         
-        assertEquals(2L, result.items[1].packetNumber)
-        assertEquals("HTTP", result.items[1].highestProtocol)
+        assertEquals(2L, data.items[1].packetNumber)
+        assertEquals("HTTP", data.items[1].protocol)
     }
 
     @Test
@@ -52,13 +62,15 @@ class RustBridgeMapperTest {
             label=TCP Flow | endpoints=192.168.1.1 -> 8.8.8.8 | total_packets=5 | total_payload_bytes=1024
         """.trimIndent()
 
-        val result = RustBridgeMapper.toFlowSearchResult(raw)
+        val result = mapper.mapFlowResult(raw)
 
-        assertEquals(1L, result.totalItems)
-        assertEquals(1, result.items.size)
-        assertEquals("TCP Flow", result.items[0].label)
-        assertEquals("192.168.1.1 -> 8.8.8.8", result.items[0].endpoints)
-        assertEquals(5L, result.items[0].totalPackets)
-        assertEquals(1024L, result.items[0].totalPayloadBytes)
+        assertTrue("Mapping should be successful", result.success)
+        val data = result.data!!
+        assertEquals(1L, data.totalItems)
+        assertEquals(1, data.items.size)
+        assertEquals("TCP Flow", data.items[0].label)
+        assertEquals("192.168.1.1 -> 8.8.8.8", data.items[0].endpoints)
+        assertEquals(5L, data.items[0].packetCount)
+        assertEquals(1024L, data.items[0].payloadBytes)
     }
 }

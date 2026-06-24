@@ -118,11 +118,10 @@ fun ActionsSection(
         if (!state.isCapturing) {
             ActionButton(
                 label = "▶ Iniciar Captura",
-                description = "Começar captura em tempo real",
                 icon = Icons.Default.PlayArrow,
                 isEnabled = !state.isLoading,
                 color = Color(0xFF22C55E),
-                onClick = { viewModel.startCapture("wlan0") },
+                onClick = { viewModel.startCapture("") },
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
@@ -132,7 +131,6 @@ fun ActionsSection(
             ) {
                 ActionButton(
                     label = "🔄 Atualizar",
-                    description = "Carregar pacotes",
                     icon = Icons.Default.Refresh,
                     isEnabled = !state.isLoading,
                     color = Color(0xFF3B82F6),
@@ -142,7 +140,6 @@ fun ActionsSection(
 
                 ActionButton(
                     label = "⏹ Parar",
-                    description = "Encerrar captura",
                     icon = Icons.Default.Stop,
                     isEnabled = !state.isLoading,
                     color = Color(0xFFEF4444),
@@ -166,7 +163,6 @@ fun ActionsSection(
         ) {
             ActionButton(
                 label = "💾 Exportar",
-                description = "Salvar captura",
                 icon = Icons.Default.Download,
                 isEnabled = state.lastSnapshot != null,
                 color = Color(0xFF8B5CF6),
@@ -176,7 +172,6 @@ fun ActionsSection(
 
             ActionButton(
                 label = "🔍 Análise",
-                description = "Analisar tráfego",
                 icon = Icons.Default.Analytics,
                 isEnabled = state.currentPackets.isNotEmpty(),
                 color = Color(0xFFF59E0B),
@@ -246,7 +241,6 @@ fun FilterCard(
 @Composable
 fun ActionButton(
     label: String,
-    description: String,
     icon: ImageVector,
     isEnabled: Boolean,
     color: Color,
