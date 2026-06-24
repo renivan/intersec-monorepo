@@ -26,14 +26,18 @@ name = "application-services"
 version = "0.1.0"
 dependencies = [
  "core-types",
+ "engine-io",
  "flow-engine",
  "libc",
  "log",
+ "neural-intelligence",
  "protocol-engine",
  "query-engine",
+ "security-dissector",
  "session-manager",
  "storage",
  "tokio",
+ "traffic-valve",
  "use-cases",
 ]
 
@@ -89,6 +93,15 @@ dependencies = [
 [[package]]
 name = "core-types"
 version = "0.1.0"
+
+[[package]]
+name = "engine-io"
+version = "0.1.0"
+dependencies = [
+ "core-types",
+ "libc",
+ "log",
+]
 
 [[package]]
 name = "errno"
@@ -230,6 +243,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "neural-intelligence"
+version = "0.1.0"
+dependencies = [
+ "core-types",
+ "flow-engine",
+ "log",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -321,6 +343,15 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "security-dissector"
+version = "0.1.0"
+dependencies = [
+ "core-types",
+ "log",
+ "protocol-engine",
+]
 
 [[package]]
 name = "session-manager"
@@ -422,6 +453,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "traffic-valve"
+version = "0.1.0"
+dependencies = [
+ "core-types",
+ "log",
 ]
 
 [[package]]

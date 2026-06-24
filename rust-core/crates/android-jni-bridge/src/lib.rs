@@ -1,6 +1,24 @@
 use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::{jstring, jboolean};
+
+// Macro para Log Facilitado via JNI
+macro_rules! guardian_log {
+    ($env:expr, $module:expr, $msg:expr) => {
+        if let Ok(log_class) = $env.find_class("com/intersec/androidapp/core/log/GuardianLogger") {
+            if let Ok(module_str) = $env.new_string($module) {
+                if let Ok(msg_str) = $env.new_string($msg) {
+                    let _ = $env.call_static_method(
+                        log_class,
+                        "log",
+                        "(Ljava/lang/String;Ljava/lang/String;Z)V",
+                        &[(&module_str).into(), (&msg_str).into(), false.into()],
+                    );
+                }
+            }
+        }
+    };
+}
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 use bridge_runtime::BridgeRuntime;
@@ -264,14 +282,23 @@ pub extern "system" fn Java_com_intersec_androidapp_core_bridge_RustBridgeClient
 
 #[no_mangle]
 pub extern "system" fn Java_com_intersec_androidapp_core_bridge_RustBridgeClient_00024Native_attachVpnTunnelNative(
-    _env: JNIEnv,
+    mut _env: JNIEnv,
     _class: JClass,
     fd: i32,
 ) -> jboolean {
     let mut runtime = RUNTIME.lock().unwrap();
+
+    guardian_log!(_env, "JNI_BRIDGE", format!("Tentativa de conexão de túnel no FD: {}", fd));
+
     match runtime.attach_vpn_tunnel(fd) {
-        Ok(_) => 1, // true
-        Err(_) => 0, // false
+        Ok(_) => {
+            guardian_log!(_env, "JNI_BRIDGE", "Túnel VPN conectado ao Motor Rust com sucesso.");
+            1
+        },
+        Err(e) => {
+            guardian_log!(_env, "JNI_BRIDGE", format!("ERRO: Falha ao conectar túnel: {:?}", e));
+            0
+        },
     }
 }
 
