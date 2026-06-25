@@ -109,6 +109,11 @@ impl AndroidAdapter {
         let _ = self.ffi.attach_vpn_tunnel(fd)?;
         Ok(())
     }
+
+    pub fn update_threat_database(&mut self, data: Vec<u8>) -> Result<(), AndroidAdapterError> {
+        let _ = self.ffi.update_threat_database(data)?;
+        Ok(())
+    }
 }
 
 fn map_required<T>(response: FfiResponse<T>) -> Result<T, AndroidAdapterError> {

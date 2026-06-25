@@ -87,4 +87,9 @@ impl FacadeApi {
     pub fn attach_vpn_tunnel(&mut self, fd: i32) -> Result<(), FacadeApiError> {
         Ok(self.app.attach_vpn_tunnel(fd)?)
     }
+
+    pub fn update_threat_database(&mut self, data: Vec<u8>) -> Result<(), FacadeApiError> {
+        // Encaminha a base de dados para o módulo de serviços
+        Ok(self.app.update_threat_database(data)?)
+    }
 }

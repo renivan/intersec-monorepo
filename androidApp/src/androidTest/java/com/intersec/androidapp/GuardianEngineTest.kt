@@ -40,4 +40,13 @@ class GuardianEngineTest {
         println("Resultado do teste de FD inválido: $success (Esperado: false)")
         assertTrue("O motor deve recusar um FD inválido", !success)
     }
+
+    @Test
+    fun testThreatDatabaseInjection() {
+        // Teste 4: Simula a injeção de uma base de ameaças (estilo Cisco/Fortinet)
+        val dummyIntel = byteArrayOf(0x01, 0x02, 0x03, 0x04)
+        val success = bridge.updateThreatDatabase(dummyIntel)
+        println("Injeção de Inteligência Global: $success")
+        assertTrue("O motor deve aceitar a atualização da base de ameaças", success)
+    }
 }

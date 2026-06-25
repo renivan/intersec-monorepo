@@ -93,6 +93,14 @@ class RustBridgeClient(
         return Native.attachVpnTunnelNative(fd)
     }
 
+    /**
+     * Atualiza a base de dados de ameaças globais (DPI Master).
+     */
+    fun updateThreatDatabase(data: ByteArray): Boolean {
+        loader.ensureLoaded()
+        return Native.updateThreatDatabaseNative(data)
+    }
+
     private object Native {
         @JvmStatic
         @FastNative
@@ -148,5 +156,8 @@ class RustBridgeClient(
         @JvmStatic
         @FastNative
         external fun attachVpnTunnelNative(fd: Int): Boolean
+
+        @JvmStatic
+        external fun updateThreatDatabaseNative(data: ByteArray): Boolean
     }
 }

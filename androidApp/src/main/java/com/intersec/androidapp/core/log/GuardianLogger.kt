@@ -18,7 +18,15 @@ object GuardianLogger {
     // Buffer local para evitar uploads excessivos
     private val sessionLogs = StringBuilder()
 
-    fun log(module: String, message: String, isCritical: Boolean = false) {
+    /**
+     * Log simplificado para evitar erros de assinatura JNI.
+     */
+    @JvmStatic
+    fun log(module: String, message: String) {
+        log(module, message, false)
+    }
+
+    fun log(module: String, message: String, isCritical: Boolean) {
         val timestamp = logFormat.format(Date())
         val formattedLine = "[$timestamp] [$module] $message"
         

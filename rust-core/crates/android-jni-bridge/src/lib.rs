@@ -2,21 +2,24 @@ use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::{jstring, jboolean};
 
-// Macro para Log Facilitado via JNI
+// Macro para Log Facilitado via JNI - Versão Estável 2.0
 macro_rules! guardian_log {
     ($env:expr, $module:expr, $msg:expr) => {
         if let Ok(log_class) = $env.find_class("com/intersec/androidapp/core/log/GuardianLogger") {
             if let Ok(module_str) = $env.new_string($module) {
                 if let Ok(msg_str) = $env.new_string($msg) {
+                    // Chama a versão simplificada do log para evitar crash de assinatura
                     let _ = $env.call_static_method(
                         log_class,
                         "log",
-                        "(Ljava/lang/String;Ljava/lang/String;Z)V",
-                        &[(&module_str).into(), (&msg_str).into(), false.into()],
+                        "(Ljava/lang/String;Ljava/lang/String;)V",
+                        &[(&module_str).into(), (&msg_str).into()],
                     );
                 }
             }
         }
+        // Limpa qualquer exceção pendente para evitar o crash SIGABRT
+        let _ = $env.exception_clear();
     };
 }
 use once_cell::sync::Lazy;
@@ -299,6 +302,21 @@ pub extern "system" fn Java_com_intersec_androidapp_core_bridge_RustBridgeClient
             guardian_log!(_env, "JNI_BRIDGE", format!("ERRO: Falha ao conectar túnel: {:?}", e));
             0
         },
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_intersec_androidapp_core_bridge_RustBridgeClient_00024Native_updateThreatDatabaseNative(
+    mut _env: JNIEnv,
+    _class: JClass,
+    data: jni::objects::JByteArray,
+) -> jboolean {
+    let bytes = _env.convert_byte_array(&data).unwrap();
+    let mut runtime = RUNTIME.lock().unwrap();
+
+    match runtime.update_threat_database(bytes) {
+        Ok(_) => 1,
+        Err(_) => 0,
     }
 }
 

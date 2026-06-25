@@ -228,4 +228,9 @@ impl BridgeRuntime {
         self.active_capture_loaded = true;
         Ok(())
     }
+
+    pub fn update_threat_database(&mut self, data: Vec<u8>) -> Result<(), BridgeRuntimeError> {
+        self.android.update_threat_database(data)?;
+        Ok(())
+    }
 }

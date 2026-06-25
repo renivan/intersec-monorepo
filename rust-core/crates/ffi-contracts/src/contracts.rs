@@ -109,4 +109,9 @@ impl FfiContracts {
         self.bridge.attach_vpn_tunnel(fd)?;
         Ok(FfiResponse::success_without_data("vpn_tunnel_attached"))
     }
+
+    pub fn update_threat_database(&mut self, data: Vec<u8>) -> Result<FfiResponse<()>, FfiContractsError> {
+        self.bridge.update_threat_database(data)?;
+        Ok(FfiResponse::success_without_data("threat_database_updated"))
+    }
 }

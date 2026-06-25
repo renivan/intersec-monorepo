@@ -96,4 +96,8 @@ impl MobileBridge {
     pub fn attach_vpn_tunnel(&mut self, fd: i32) -> Result<(), MobileBridgeError> {
         Ok(self.facade.attach_vpn_tunnel(fd)?)
     }
+
+    pub fn update_threat_database(&mut self, data: Vec<u8>) -> Result<(), MobileBridgeError> {
+        Ok(self.facade.update_threat_database(data)?)
+    }
 }

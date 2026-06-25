@@ -108,6 +108,11 @@ impl<R: StorageRepository> ApplicationServices<R> {
         Ok(())
     }
 
+    pub fn update_threat_database(&mut self, _data: Vec<u8>) -> Result<(), ApplicationServicesError> {
+        // TODO: Injetar no módulo security-dissector
+        Ok(())
+    }
+
     pub fn stop_capture(&mut self, session_id: &str) -> Result<SessionSnapshot, ApplicationServicesError> {
         Ok(self.sessions.lock().unwrap().stop_session(session_id)?)
     }
