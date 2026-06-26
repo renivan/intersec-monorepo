@@ -24,6 +24,8 @@ class SecuritySettingsManager(private val context: Context) {
         private val KEY_SECURITY_LEVEL = intPreferencesKey("security_level") // 0=Baixo, 1=Normal, 2=Alto
         private val KEY_USER_TIER = intPreferencesKey("user_tier") // 0=FREE, 1=PRO
         private val KEY_THEME_TYPE = intPreferencesKey("app_theme_type")
+        private val KEY_REWARDED_MINUTES_MONTH = intPreferencesKey("rewarded_minutes_month")
+        private val KEY_LAST_REWARD_MONTH = intPreferencesKey("last_reward_month")
     }
 
     val smartShieldActive: Flow<Boolean> = context.dataStore.data.map { it[KEY_SMART_SHIELD] ?: true }
@@ -31,6 +33,8 @@ class SecuritySettingsManager(private val context: Context) {
     val securityLevel: Flow<Int> = context.dataStore.data.map { it[KEY_SECURITY_LEVEL] ?: 1 }
     val userTier: Flow<Int> = context.dataStore.data.map { it[KEY_USER_TIER] ?: 0 }
     val themeType: Flow<Int> = context.dataStore.data.map { it[KEY_THEME_TYPE] ?: 0 }
+    val rewardedMinutesMonth: Flow<Int> = context.dataStore.data.map { it[KEY_REWARDED_MINUTES_MONTH] ?: 0 }
+    val lastRewardMonth: Flow<Int> = context.dataStore.data.map { it[KEY_LAST_REWARD_MONTH] ?: -1 }
 
     suspend fun setSmartShield(active: Boolean) {
         context.dataStore.edit { it[KEY_SMART_SHIELD] = active }
@@ -53,6 +57,21 @@ class SecuritySettingsManager(private val context: Context) {
 
     suspend fun setThemeType(typeId: Int) {
         context.dataStore.edit { it[KEY_THEME_TYPE] = typeId }
+    }
+
+    suspend fun addRewardedMinute(currentMonth: Int) {
+        context.dataStore.edit { prefs ->
+            val lastMonth = prefs[KEY_LAST_REWARD_MONTH] ?: -1
+            var minutes = prefs[KEY_REWARDED_MINUTES_MONTH] ?: 0
+            
+            if (lastMonth != currentMonth) {
+                minutes = 1
+                prefs[KEY_LAST_REWARD_MONTH] = currentMonth
+            } else {
+                minutes += 1
+            }
+            prefs[KEY_REWARDED_MINUTES_MONTH] = minutes
+        }
     }
 }
 

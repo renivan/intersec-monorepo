@@ -43,7 +43,7 @@ fun PacketDetailScreen(
                         "PACKET INSPECTOR", 
                         color = MaterialTheme.colorScheme.primary, 
                         fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = FontFamily.Default
                     ) 
                 },
                 navigationIcon = {
@@ -96,7 +96,7 @@ fun PacketDetailScreen(
                         Text(
                             text = item.info, 
                             style = MaterialTheme.typography.bodySmall, 
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.Default,
                             color = Color.White.copy(alpha = 0.8f)
                         )
                     }
@@ -107,7 +107,7 @@ fun PacketDetailScreen(
                 Text(
                     text = "ERROR: $error",
                     color = MaterialTheme.colorScheme.error,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = FontFamily.Default,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -123,7 +123,7 @@ fun SectionHeader(title: String) {
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Black,
-            fontFamily = FontFamily.Monospace
+            fontFamily = FontFamily.Default
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), thickness = 1.dp)
     }
@@ -135,7 +135,7 @@ fun DetailRow(label: String, value: String, color: Color = Color.White) {
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Monospace)
-        Text(value, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Default)
+        Text(value, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
     }
 }

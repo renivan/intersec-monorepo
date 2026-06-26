@@ -68,14 +68,14 @@ fun InterSecApp(analysisViewModel: AnalysisViewModel = viewModel()) {
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Black,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                     )
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                 menuItems.forEach { item ->
                     NavigationDrawerItem(
                         icon = { Icon(item.icon, contentDescription = null, tint = if (currentRoute == item.route) MaterialTheme.colorScheme.primary else Color.Gray) },
-                        label = { Text(item.name.uppercase(), color = if (currentRoute == item.route) Color.White else Color.Gray, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontWeight = FontWeight.Bold) },
+                        label = { Text(item.name.uppercase(), color = if (currentRoute == item.route) Color.White else Color.Gray, fontFamily = androidx.compose.ui.text.font.FontFamily.Default, fontWeight = FontWeight.Bold) },
                         selected = currentRoute == item.route,
                         onClick = {
                             scope.launch { drawerState.close() }
@@ -98,7 +98,7 @@ fun InterSecApp(analysisViewModel: AnalysisViewModel = viewModel()) {
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("INTERSEC ANALYZER", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace) },
+                    title = { Text("INTERSEC ANALYZER", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black, fontFamily = androidx.compose.ui.text.font.FontFamily.Default) },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
                     ),

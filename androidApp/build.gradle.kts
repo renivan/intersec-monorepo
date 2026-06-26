@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.play.services.ads)
+    implementation(libs.billing.ktx)
     implementation(libs.gson)
     
     // Firebase
@@ -78,7 +80,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.firebase.common)
-    
+    testImplementation(libs.junit.jupiter)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

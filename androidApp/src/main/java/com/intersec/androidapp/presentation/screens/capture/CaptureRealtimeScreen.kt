@@ -1,4 +1,4 @@
-﻿package com.intersec.androidapp.presentation.screens.capture
+package com.intersec.androidapp.presentation.screens.capture
 
 import android.annotation.SuppressLint
 import android.net.VpnService
@@ -73,10 +73,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.intersec.androidapp.core.ads.AdManager
 import com.intersec.androidapp.presentation.screens.overview.formatVolume
 import com.intersec.androidapp.presentation.state.*
 import com.intersec.androidapp.presentation.viewmodel.CaptureRealtimeViewModel
 import java.util.Locale
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import com.intersec.androidapp.core.vpn.InterSecVpnService
 
 @Composable
 fun CaptureRealtimeScreen(
@@ -85,12 +90,14 @@ fun CaptureRealtimeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = context as? Activity
     val scrollState = rememberScrollState()
     
     val vpnLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
+            context.startService(Intent(context, InterSecVpnService::class.java).apply { action = "START" })
             viewModel.onVpnAuthorized()
         }
     }
@@ -103,6 +110,7 @@ fun CaptureRealtimeScreen(
                 if (intent != null) {
                     vpnLauncher.launch(intent)
                 } else {
+                    context.startService(Intent(context, InterSecVpnService::class.java).apply { action = "START" })
                     viewModel.onVpnAuthorized()
                 }
             },
@@ -114,7 +122,7 @@ fun CaptureRealtimeScreen(
         AlertDialog(
             onDismissRequest = { viewModel.clearError() },
             title = { Text("Acesso Negado (Root necessário)") },
-            text = { Text("Nâo foi possível iniciar a captura direta na interface ${state.networkInterface}. Deseja tentar o modo VPN segura (Não-Root)?") },
+            text = { Text("Não foi possível iniciar a captura direta na interface ${state.networkInterface}. Deseja tentar o modo VPN segura (Não-Root)?") },
             confirmButton = {
                 Button(onClick = { 
                     val intent = VpnService.prepare(context)
@@ -125,7 +133,7 @@ fun CaptureRealtimeScreen(
                     }
                     viewModel.clearError()
                 }) {
-                    Text("Usar MODO VPN")
+                    Text("USAR MODO VPN")
                 }
             },
             dismissButton = {
@@ -139,7 +147,7 @@ fun CaptureRealtimeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PacketColorPalette.BACKGROUND_DARK)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -158,7 +166,7 @@ fun CaptureRealtimeScreen(
             CaptureFilterSection(state, viewModel)
             
             Spacer(Modifier.height(12.dp))
-            CaptureControlsSection(state, viewModel)
+            CaptureControlsSection(state, viewModel, activity, context)
             
             Spacer(Modifier.height(12.dp))
             CaptureStatusSection(state)
@@ -170,11 +178,23 @@ fun CaptureRealtimeScreen(
     if (state.showSummaryModal) {
         CaptureSummaryModal(
             state = state,
-            onDiscard = { viewModel.discardCapture() },
+            onDiscard = { 
+                context.startService(Intent(context, InterSecVpnService::class.java).apply { action = "STOP" })
+                viewModel.discardCapture() 
+            },
             onContinue = { viewModel.hideSummary() },
             onAnalyze = { 
-                // Navegar para análise ou fechar modal dependendo do fluxo
-                viewModel.hideSummary() 
+                if (state.userTier == 0) {
+                    activity?.let {
+                        AdManager.showRewardedAd(it, {
+                            viewModel.hideSummary()
+                        }, {
+                            // Erro
+                        })
+                    }
+                } else {
+                    viewModel.hideSummary() 
+                }
             }
         )
     }
@@ -237,10 +257,10 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
             .fillMaxWidth()
             .clickable(enabled = isPro) { showInterfaceDialog = true },
         colors = CardDefaults.cardColors(
-            containerColor = PacketColorPalette.CARD_BACKGROUND
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, if (isPro) Color.Cyan.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f))
+        border = BorderStroke(1.dp, if (isPro) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f))
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -253,14 +273,14 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White.copy(alpha = 0.5f)
                 )
-                Text(state.networkInterface, color = if (isPro) Color.Cyan else Color.White.copy(alpha = 0.7f), fontWeight = FontWeight.ExtraBold)
+                Text(state.networkInterface, color = if (isPro) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f), fontWeight = FontWeight.ExtraBold)
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text("TIPO DE CONEXÃO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                 Text(state.networkName.uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             if (isPro) {
-                Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = Color.Cyan)
+                Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             } else {
                 Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
             }
@@ -275,10 +295,10 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                     "SELECIONAR INTERFACE DE MONITORAMENTO", 
                     fontSize = 14.sp, 
                     fontWeight = FontWeight.Black,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Default
                 ) 
             },
-            containerColor = PacketColorPalette.CARD_BACKGROUND,
+            containerColor = MaterialTheme.colorScheme.surface,
             text = {
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                     items(state.availableInterfaces) { info ->
@@ -288,13 +308,13 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                                 Text(
                                     info.interfaceName, 
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.Cyan else Color.White
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White
                                 ) 
                             },
                             supportingContent = { 
                                 Text(
                                     "${info.typeName} - ${info.details}",
-                                    color = if (isSelected) Color.Cyan.copy(alpha = 0.7f) else Color.Gray
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else Color.Gray
                                 ) 
                             },
                             leadingContent = { 
@@ -303,24 +323,24 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                                     "Ethernet" -> Icons.Default.SettingsInputHdmi
                                     else -> Icons.Default.SignalCellularAlt
                                 }
-                                Icon(icon, contentDescription = null, tint = if (isSelected) Color.Cyan else Color.Gray)
+                                Icon(icon, contentDescription = null, tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray)
                             },
                             trailingContent = {
                                 if (isSelected) {
-                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.Cyan)
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 }
                             },
                             colors = ListItemDefaults.colors(
-                                containerColor = if (isSelected) Color.Cyan.copy(alpha = 0.1f) else Color.Transparent,
-                                headlineColor = if (isSelected) Color.Cyan else Color.White,
-                                leadingIconColor = if (isSelected) Color.Cyan else Color.Gray
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent,
+                                headlineColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+                                leadingIconColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
                             ),
                             modifier = Modifier
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                                 .clip(RoundedCornerShape(4.dp))
                                 .border(
                                     width = if (isSelected) 1.dp else 0.dp,
-                                    color = if (isSelected) Color.Cyan.copy(alpha = 0.5f) else Color.Transparent,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.Transparent,
                                     shape = RoundedCornerShape(4.dp)
                                 )
                                 .clickable { 
@@ -334,7 +354,7 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
             },
             confirmButton = {
                 TextButton(onClick = { showInterfaceDialog = false }) { 
-                    Text("FECHAR", color = Color.Cyan, fontWeight = FontWeight.Bold) 
+                    Text("FECHAR", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) 
                 }
             }
         )
@@ -354,9 +374,9 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "â€¢ Seus dados NÃO saem do dispositivo.\n" +
-                    "â€¢ O motor Native processa tudo localmente.\n" +
-                    "â€¢ Isso permite detectar invasões e vazamentos.",
+                    "• Seus dados NÃO saem do dispositivo.\n" +
+                    "• O motor Native processa tudo localmente.\n" +
+                    "• Isso permite detectar invasões e vazamentos.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.7f)
                 )
@@ -371,7 +391,7 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onAccept,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.White)
             ) {
                 Text("ACEITAR E ATIVAR PROTEÇÃO")
             }
@@ -388,7 +408,7 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
 fun CaptureFilterSection(state: CaptureRealtimeUiState, viewModel: CaptureRealtimeViewModel) {
     Column {
         Text(
-            "ðŸŽ¯ Filtro BPF (Opcional)",
+            "🎯 Filtro BPF (Opcional)",
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
@@ -407,8 +427,8 @@ fun CaptureFilterSection(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                 unfocusedTextColor = Color.White,
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
-                focusedContainerColor = PacketColorPalette.CARD_BACKGROUND,
-                unfocusedContainerColor = PacketColorPalette.CARD_BACKGROUND
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface
             ),
             shape = RoundedCornerShape(8.dp)
         )
@@ -418,7 +438,9 @@ fun CaptureFilterSection(state: CaptureRealtimeUiState, viewModel: CaptureRealti
 @Composable
 fun CaptureControlsSection(
     state: CaptureRealtimeUiState,
-    viewModel: CaptureRealtimeViewModel
+    viewModel: CaptureRealtimeViewModel,
+    activity: Activity?,
+    context: Context
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -427,10 +449,22 @@ fun CaptureControlsSection(
         if (!state.isCapturing) {
             Button(
                 onClick = { 
-                    if (!state.isVpnAuthorized) {
-                        viewModel.requestVpnAuthorization()
+                    if (state.userTier == 0) {
+                        activity?.let {
+                            AdManager.showRewardedAd(it, {
+                                if (!state.isVpnAuthorized) {
+                                    viewModel.requestVpnAuthorization()
+                                } else {
+                                    viewModel.startCapture()
+                                }
+                            }, {})
+                        }
                     } else {
-                        viewModel.startCapture()
+                        if (!state.isVpnAuthorized) {
+                            viewModel.requestVpnAuthorization()
+                        } else {
+                            viewModel.startCapture()
+                        }
                     }
                 },
                 modifier = Modifier.weight(1f).height(48.dp),
@@ -439,7 +473,7 @@ fun CaptureControlsSection(
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("INICIAR CAPTURA")
+                Text(if (state.userTier == 0) "INICIAR (AD REQ)" else "INICIAR CAPTURA")
             }
         } else {
             val controlColor = if (state.isPaused) Color(0xFF22C55E) else Color(0xFFEAB308)
@@ -458,7 +492,10 @@ fun CaptureControlsSection(
             }
 
             Button(
-                onClick = { viewModel.stopCapture() },
+                onClick = { 
+                    context.startService(Intent(context, InterSecVpnService::class.java).apply { action = "STOP" })
+                    viewModel.stopCapture() 
+                },
                 modifier = Modifier.weight(1f).height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
                 shape = RoundedCornerShape(8.dp)
@@ -478,7 +515,7 @@ fun CaptureStatusSection(state: CaptureRealtimeUiState) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -486,7 +523,7 @@ fun CaptureStatusSection(state: CaptureRealtimeUiState) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("DURAÃ‡ÃƒO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text("DURAÇÃO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                 Text(
                     String.format("%02d:%02d:%02d", 
                         state.elapsedSeconds / 3600, 
@@ -512,13 +549,13 @@ fun CaptureSummaryModal(
 ) {
     AlertDialog(
         onDismissRequest = onContinue,
-        containerColor = PacketColorPalette.CARD_BACKGROUND,
+        containerColor = MaterialTheme.colorScheme.surface,
         title = { 
             Text(
                 "RESUMO DA OPERAÇÃO", 
-                color = Color.Cyan, 
+                color = MaterialTheme.colorScheme.primary, 
                 fontWeight = FontWeight.Black,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FontFamily.Default,
                 fontSize = 16.sp
             ) 
         },
@@ -540,17 +577,17 @@ fun CaptureSummaryModal(
                     "DESEJA DESCARTAR OS DADOS OU PROSSEGUIR COM A ANÁLISE DETALHADA?",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Default
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = onAnalyze,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
                 shape = RoundedCornerShape(4.dp)
             ) {
-                Text("ANALISAR DADOS", fontWeight = FontWeight.Bold)
+                Text(if (state.userTier == 0) "ASSISTIR AD E ANALISAR" else "ANALISAR DADOS", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -572,8 +609,8 @@ fun SummaryRow(label: String, value: String) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Monospace)
-        Text(value, style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Default)
+        Text(value, style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
     }
 }
 
@@ -642,7 +679,7 @@ fun FlowsList(state: CaptureRealtimeUiState) {
 fun FlowRow(flow: RealtimeFlowModel) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = PacketColorPalette.CARD_BACKGROUND),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, if (flow.isInsecure) Color.Red.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f))
     ) {
         Row(
@@ -652,7 +689,7 @@ fun FlowRow(flow: RealtimeFlowModel) {
             Icon(
                 if (flow.isInsecure) Icons.Default.Warning else Icons.Default.SwapHoriz,
                 contentDescription = null,
-                tint = if (flow.isInsecure) Color.Red else Color.Cyan,
+                tint = if (flow.isInsecure) Color.Red else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.width(12.dp))
@@ -688,8 +725,7 @@ fun PacketRow(packet: RealtimePacketModel) {
                 Text(packet.protocol, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(4.dp))
-            Text(packet.info, style = MaterialTheme.typography.bodySmall, color = Color.White, fontFamily = FontFamily.Monospace)
+            Text(packet.info, style = MaterialTheme.typography.bodySmall, color = Color.White, fontFamily = FontFamily.Default)
         }
     }
 }
-

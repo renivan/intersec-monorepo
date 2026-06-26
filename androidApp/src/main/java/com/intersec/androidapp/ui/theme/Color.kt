@@ -2,27 +2,28 @@ package com.intersec.androidapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// --- TACTICAL MILITARY (MILITAR DE ELITE) ---
-val TacticalGreen = Color(0xFF00FF41)
-val StealthGray = Color(0xFF0D1117)
-val RadarGray = Color(0xFF161B22)
-val WarningOrange = Color(0xFFFF9800)
-val AlertRed = Color(0xFFFF0000)
+// --- CIBER INTERSECURITY (CAMUFLADO PRETO / VERDE OLIVA) ---
+val CyberBlack = Color(0xFF121212) // Camuflado escuro base
+val CyberGray = Color(0xFF1E1E1E)  // Detalhes camuflados
+val OliveGreen = Color(0xFF556B2F) // Botões táticos
+val SoftGreen = Color(0xFF8FBC8F)
 
-// --- TECH MASTER (NAVY/CYAN) ---
-val MasterPrimary = Color(0xFF475AD7)
-val MasterBackground = Color(0xFF0F172A)
-val MasterSurface = Color(0xFF1E293B)
-val MasterCyan = Color(0xFF00FFFF)
+// --- TECH MASTER SOAVE (NAVY/CYAN) ---
+val MasterNavy = Color(0xFF1A237E)
+val MasterSoftCyan = Color(0xFF80DEEA)
+val MasterBackground = Color(0xFF0D1B2A)
+val MasterSurface = Color(0xFF1B263B)
 
-// --- MINIMAL (BLACK/WHITE/ORANGE) ---
-val MinimalBlack = Color(0xFF000000)
-val MinimalWhite = Color(0xFFFFFFFF)
-val MinimalOrange = Color(0xFFFF5722)
-val MinimalGray = Color(0xFF121212)
+// --- MINIMAL ORANGE SOAVE (BLACK/WHITE/ORANGE) ---
+val MinimalBlack = Color(0xFF121212)
+val MinimalWhite = Color(0xFFE0E0E0)
+val SoftOrange = Color(0xFFFFAB40)
+val MinimalSurface = Color(0xFF212121)
 
-// --- ANDROID MATERIAL (STANDARD LIGHT) ---
-val MaterialPrimary = Color(0xFF6750A4)
-val MaterialBackground = Color(0xFFFFFBFE)
-val MaterialSurface = Color(0xFFFFFBFE)
-val MaterialError = Color(0xFFB3261E)
+// --- ANDROID STUDIO DARK (DARK NIGHT) ---
+val StudioDarkBackground = Color(0xFF1E1F22) // Novo padrão IntelliJ Dark
+val StudioDarkSurface = Color(0xFF2B2D30)
+val StudioDarkPrimary = Color(0xFF3574F0)
+val StudioDarkSelection = Color(0xFF43454A)
+val StudioDarkText = Color(0xFFBCBEC4)
+val StudioDarkError = Color(0xFFF75F5F)

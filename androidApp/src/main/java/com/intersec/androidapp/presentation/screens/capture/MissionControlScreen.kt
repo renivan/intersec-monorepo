@@ -1,5 +1,6 @@
-﻿package com.intersec.androidapp.presentation.screens.capture
+package com.intersec.androidapp.presentation.screens.capture
 
+import android.app.Activity
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,20 +26,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.R
+import com.intersec.androidapp.core.ads.AdManager
 import com.intersec.androidapp.core.file.AndroidCaptureImporter
 import com.intersec.androidapp.presentation.screens.overview.NeuralMapVisual
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
-import com.intersec.androidapp.presentation.viewmodel.AuthViewModel
 
 @Composable
 fun MissionControlScreen(
     viewModel: AnalysisViewModel = viewModel(),
-    authViewModel: AuthViewModel = viewModel(),
     onOpenPackets: () -> Unit = {},
     onOpenFlows: () -> Unit = {},
     onOpenOverview: () -> Unit = {},
@@ -47,11 +47,9 @@ fun MissionControlScreen(
     onOpenSettings: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
-    val authState by authViewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val activity = context as? Activity
     val scrollState = rememberScrollState()
-
-    var registrationPassword by remember { mutableStateOf("") }
 
     val filePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -81,66 +79,22 @@ fun MissionControlScreen(
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                "INTERSEC: MISSION CONTROL",
+                "INTERSEC: SEGURANÇA",
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Black,
-                fontFamily = FontFamily.Monospace
+                fontFamily = FontFamily.Default
             )
         }
         
         Spacer(Modifier.height(16.dp))
 
-        // ===== OPERATOR AUTHORIZATION (REGISTRATION) =====
-        if (!authState.isSuccess) {
-            SectionHeader("OPERATOR REGISTRATION")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("IDENTIFY OPERATOR TO INITIALIZE CORE", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Monospace)
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = authState.email,
-                        onValueChange = { authViewModel.onEmailChange(it) },
-                        label = { Text("EMAIL", fontSize = 10.sp) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(2.dp),
-                        singleLine = true
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = registrationPassword,
-                        onValueChange = { registrationPassword = it },
-                        label = { Text("SECURITY KEY", fontSize = 10.sp) },
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(2.dp),
-                        singleLine = true
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = { authViewModel.register(registrationPassword) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
-                        enabled = !authState.isLoading
-                    ) {
-                        if (authState.isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                        else Text("AUTHORIZE OPERATOR", fontWeight = FontWeight.Bold)
-                    }
-                    if (authState.error != null) {
-                        Text(authState.error!!, color = Color.Red, fontSize = 10.sp, modifier = Modifier.padding(top = 8.dp))
-                    }
-                }
-            }
-            Spacer(Modifier.height(24.dp))
-        }
-
         // ===== IDENTIFICADOR DE REDE & ENTROPIA =====
-        NetworkStatusSection(state.session != null, state.overview?.averageRiskScore ?: 0)
+        NetworkStatusSection(
+            isCapturing = state.session != null, 
+            riskScore = state.overview?.averageRiskScore ?: 0,
+            networkState = state.networkState
+        )
 
         Spacer(Modifier.height(16.dp))
         
@@ -155,9 +109,10 @@ fun MissionControlScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        SectionHeader("TACTICAL OPERATIONS")
+        SectionHeader("MONITORAMENTO ATIVO")
         
         QuickModeButton(
+            label = "INICIAR CAPTURA EM TEMPO REAL",
             icon = Icons.Default.Videocam, 
             color = MaterialTheme.colorScheme.primary, 
             modifier = Modifier.fillMaxWidth(),
@@ -166,24 +121,28 @@ fun MissionControlScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // ===== GRID TÁTICO DE ANÁLISE =====
-        SectionHeader("INTELLIGENCE CHANNELS")
+        // ===== GRID DE ANÁLISE =====
+        SectionHeader("CANAIS DE ANÁLISE")
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.height(360.dp) 
+            modifier = Modifier.height(280.dp) 
         ) {
-            item { TacticalCard("FLOWS", "ACTIVE CHANNELS", Icons.Default.SwapHoriz, MaterialTheme.colorScheme.primary, onOpenFlows) }
-            item { TacticalCard("PACKETS", "X-RAY DETAIL", Icons.AutoMirrored.Filled.List, Color.White, onOpenPackets) }
-            item { TacticalCard("OVERVIEW", "NEURAL MAP", Icons.Default.Assessment, MaterialTheme.colorScheme.primary, onOpenOverview) }
-            item { TacticalCard("SECURITY", "ACTIVE DEFENSE", Icons.Default.Security, MaterialTheme.colorScheme.error, onOpenSecurity) }
-            item { TacticalCard("THEMES", "VISUAL IDENTITY", Icons.Default.Palette, MaterialTheme.colorScheme.tertiary, onOpenSettings) }
-            item { TacticalCard("SETTINGS", "SYSTEM CONFIG", Icons.Default.Settings, MaterialTheme.colorScheme.primary, onOpenSettings) }
+            item { TacticalCard("FLUXOS", "CANAIS ATIVOS", Icons.Default.SwapHoriz, MaterialTheme.colorScheme.primary, onOpenFlows) }
+            item { TacticalCard("PACOTES", "DETALHAMENTO", Icons.AutoMirrored.Filled.List, Color.White, onOpenPackets) }
+            item { TacticalCard("VISÃO GERAL", "MAPA DE REDE", Icons.Default.Assessment, MaterialTheme.colorScheme.primary, onOpenOverview) }
+            item { TacticalCard("PROTEÇÃO", "DEFESA ATIVA", Icons.Default.Security, MaterialTheme.colorScheme.error, onOpenSecurity) }
         }
 
         Spacer(Modifier.height(24.dp))
+
+        // Botão de Upgrade Estilo Banner
+        if (state.userTier == 0) {
+            UpgradeBanner(onClick = { viewModel.setShowAdRewardDialog(true) })
+            Spacer(Modifier.height(24.dp))
+        }
 
         // ===== IMPORTAÇÃO & SESSÃO =====
         OutlinedButton(
@@ -195,7 +154,7 @@ fun MissionControlScreen(
         ) {
             Icon(Icons.Default.FileUpload, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("IMPORT PCAP DATASET", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+            Text("IMPORT PCAP DATASET", fontFamily = FontFamily.Default, fontWeight = FontWeight.Bold)
         }
 
         if (state.session != null) {
@@ -210,16 +169,16 @@ fun MissionControlScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // ===== BEHAVIORAL ALERTS (DADOS REAIS DO MOTOR Native) =====
-        SectionHeader("BEHAVIORAL ENGINE ALERTS")
+        // ===== ALERTAS DE COMPORTAMENTO (DADOS REAIS DO MOTOR Native) =====
+        SectionHeader("ALERTAS DE COMPORTAMENTO")
         
         val events = state.overview?.events ?: emptyList()
         if (events.isEmpty()) {
             Text(
-                "NO SUSPICIOUS BEHAVIOR DETECTED.", 
+                "NENHUM COMPORTAMENTO SUSPEITO DETECTADO.", 
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FontFamily.Default,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         } else {
@@ -236,6 +195,114 @@ fun MissionControlScreen(
 
         Spacer(Modifier.height(40.dp))
     }
+
+    if (state.showAdRewardDialog) {
+        SubscriptionAdModal(
+            onDismiss = { viewModel.setShowAdRewardDialog(false) },
+            onUpgrade = {
+                val activity = context as? com.intersec.androidapp.MainActivity
+                activity?.startBillingFlow()
+                viewModel.setShowAdRewardDialog(false)
+            }
+        )
+    }
+}
+
+@Composable
+fun UpgradeBanner(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("LIBERAR ACESSO PRO", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("Remova limites de tempo e habilite temas exclusivos.", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+fun SubscriptionAdModal(
+    onDismiss: () -> Unit,
+    onUpgrade: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Black.copy(alpha = 0.85f))
+                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                .padding(24.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Fechar
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = null, tint = Color.Gray)
+                    }
+                }
+
+                Icon(
+                    Icons.Default.VerifiedUser,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    "INTERSEC PRO",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
+                )
+                
+                Text(
+                    "NÍVEL ANALISTA EXPERIENTE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                Text(
+                    "Acesse o monitoramento ilimitado, todos os temas visuais e suporte a atualizações prioritárias de inteligência.",
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                Spacer(Modifier.height(32.dp))
+
+                Button(
+                    onClick = onUpgrade,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("INICIAR TESTE POR R$ 1,00", fontWeight = FontWeight.Bold)
+                }
+
+                TextButton(onClick = onDismiss) {
+                    Text("CONTINUAR NO MODO LIMITADO", color = Color.Gray, fontSize = 10.sp)
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -246,14 +313,18 @@ fun SectionHeader(title: String) {
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Black,
-            fontFamily = FontFamily.Monospace
+            fontFamily = FontFamily.Default
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), thickness = 1.dp)
     }
 }
 
 @Composable
-fun NetworkStatusSection(isCapturing: Boolean, riskScore: Int = 0) {
+fun NetworkStatusSection(
+    isCapturing: Boolean, 
+    riskScore: Int = 0,
+    networkState: com.intersec.androidapp.presentation.state.NetworkState
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -264,19 +335,29 @@ fun NetworkStatusSection(isCapturing: Boolean, riskScore: Int = 0) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val statusColor = if (!networkState.isConnected) Color.Gray 
+                             else if (riskScore > 50) MaterialTheme.colorScheme.error 
+                             else MaterialTheme.colorScheme.primary
+
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
-                    progress = { if (isCapturing) (100 - riskScore) / 100f else 0f },
+                    progress = { if (networkState.isConnected) (100 - riskScore) / 100f else 0f },
                     modifier = Modifier.size(50.dp),
-                    color = if (riskScore > 50) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    color = statusColor,
                     strokeWidth = 2.dp,
-                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    trackColor = statusColor.copy(alpha = 0.1f)
                 )
                 Icon(
-                    if (isCapturing) Icons.Default.Wifi else Icons.Default.WifiOff,
+                    if (networkState.isConnected) {
+                        when (networkState.typeName) {
+                            "Wi-Fi" -> Icons.Default.Wifi
+                            "Ethernet" -> Icons.Default.SettingsEthernet
+                            else -> Icons.Default.SignalCellularAlt
+                        }
+                    } else Icons.Default.WifiOff,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
-                    tint = if (riskScore > 50) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    tint = statusColor
                 )
             }
 
@@ -284,17 +365,21 @@ fun NetworkStatusSection(isCapturing: Boolean, riskScore: Int = 0) {
 
             Column {
                 Text(
-                    text = if (isCapturing) "INTERFACE: WLAN0 (ACTIVE)" else "IDLE: WAITING INTERFACE",
+                    text = if (networkState.isConnected) 
+                        "INTERFACE: ${networkState.interfaceName.uppercase()} (${networkState.typeName.uppercase()})" 
+                        else "IDLE: AGUARDANDO REDE",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Default
                 )
                 Text(
-                    text = if (isCapturing) "NETWORK INTEGRITY: ${100 - riskScore}%" else "ENTROPY: NULL",
+                    text = if (networkState.isConnected) 
+                        "STATUS: ${networkState.details.uppercase()} | INTEGRIDADE: ${100 - riskScore}%" 
+                        else "ENTROPIA: NULL",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontFamily = FontFamily.Monospace
+                    color = statusColor,
+                    fontFamily = FontFamily.Default
                 )
             }
         }
@@ -321,7 +406,7 @@ fun QuickModeButton(
     ) {
         Icon(icon, contentDescription = null, tint = color)
         Spacer(Modifier.width(12.dp))
-        Text(label, fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Monospace)
+        Text(label, fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Default)
     }
 }
 
@@ -342,8 +427,8 @@ fun TacticalCard(title: String, subtitle: String, icon: ImageVector, color: Colo
         ) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
             Spacer(Modifier.height(8.dp))
-            Text(title, color = Color.White, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Monospace)
+            Text(title, color = Color.White, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Default)
         }
     }
 }
@@ -361,10 +446,10 @@ fun ActiveSessionPanel(sourceName: String, packetCount: Long, onClear: () -> Uni
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.Adjust, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(sourceName.uppercase(), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                Text("PKTS: $packetCount", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+                Text(sourceName.uppercase(), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+                Text("PKTS: $packetCount", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Default)
             }
             IconButton(onClick = onLogs) { Icon(Icons.Default.Terminal, contentDescription = "Logs", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
             IconButton(onClick = onClear) { Icon(Icons.Default.Delete, contentDescription = "Clear", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
@@ -374,7 +459,7 @@ fun ActiveSessionPanel(sourceName: String, packetCount: Long, onClear: () -> Uni
 
 @Composable
 fun BehaviorAlertItem(
-    target: String = "ANOMALY DETECTED", 
+    target: String = "ANOMALIA DETECTADA",
     alert: String, 
     color: Color
 ) {
@@ -387,11 +472,11 @@ fun BehaviorAlertItem(
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("!", color = color, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, fontSize = 18.sp)
+        Text("!", color = color, fontWeight = FontWeight.Black, fontFamily = FontFamily.Default, fontSize = 18.sp)
         Spacer(Modifier.width(12.dp))
         Column {
-            Text(target, color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            Text(alert, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Monospace)
+            Text(target, color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+            Text(alert, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Default)
         }
     }
 }

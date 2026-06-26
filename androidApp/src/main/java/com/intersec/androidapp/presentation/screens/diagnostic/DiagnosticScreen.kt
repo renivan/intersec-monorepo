@@ -1,4 +1,4 @@
-﻿package com.intersec.androidapp.presentation.screens.diagnostic
+package com.intersec.androidapp.presentation.screens.diagnostic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -97,8 +97,8 @@ fun DiagnosticScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ===== LOGS DE EXECUÇÃO EM TEMPO REAL =====
-            Text("Terminal de Diagnóstico", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            // ===== LOGS DE EXECU��O EM TEMPO REAL =====
+            Text("Terminal de Diagn�stico", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(8.dp))
             
             Box(
@@ -114,7 +114,7 @@ fun DiagnosticScreen(
                         Text(
                             text = log,
                             color = if (log.contains("ERRO")) Color.Red else if (log.contains("SUCESSO")) Color.Green else Color.LightGray,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = FontFamily.Default,
                             fontSize = 11.sp,
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
@@ -122,7 +122,7 @@ fun DiagnosticScreen(
                 }
             }
 
-            // ===== LÃ“GICA DE TESTE (SIMULADA NO APP CHAMANDO Native REAL) =====
+            // ===== LÓGICA DE TESTE (SIMULADA NO APP CHAMANDO Native REAL) =====
             LaunchedEffect(isRunningTest) {
                 if (isRunningTest) {
                     try {
@@ -132,29 +132,29 @@ fun DiagnosticScreen(
                         testLogs.add("  + Resposta Native: $ping")
                         
                         delay(800.milliseconds)
-                        testLogs.add("> [2/4] Testando Ingestão e Interpretação...")
+                        testLogs.add("> [2/4] Testando Ingest�o e Interpreta��o...")
                         val testResult = bridge.runFullSystemTest()
                         val parts = testResult.split("|")
                         if (parts[0] == "PASS") {
-                            testLogs.add("  + SUCESSO: Latência Nativa ${parts[2]}")
+                            testLogs.add("  + SUCESSO: Lat�ncia Nativa ${parts[2]}")
                         } else {
                             throw Exception("Falha no teste nativo")
                         }
 
                         delay(800.milliseconds)
-                        testLogs.add("> [3/4] Validando IdentificaÃ§Ã£o de Protocolos...")
+                        testLogs.add("> [3/4] Validando Identificação de Protocolos...")
                         val overview = bridge.getCaptureOverview()
-                        testLogs.add("  + Inteligência detectada: ${overview.length} bytes de metadados.")
+                        testLogs.add("  + Intelig�ncia detectada: ${overview.length} bytes de metadados.")
 
                         delay(800.milliseconds)
-                        testLogs.add("> [4/4] Verificando Persistência Background...")
+                        testLogs.add("> [4/4] Verificando Persist�ncia Background...")
                         testLogs.add("  + SUCESSO: Guardian Service sincronizado.")
                         
                         systemStatus = "PASS"
                         testLogs.add("> --- TESTE FINALIZADO COM 100% DE SUCESSO ---")
                     } catch (e: Exception) {
                         systemStatus = "FAIL"
-                        testLogs.add("!!! ERRO CRÃTICO: ${e.message}")
+                        testLogs.add("!!! ERRO CRÍTICO: ${e.message}")
                     } finally {
                         isRunningTest = false
                     }

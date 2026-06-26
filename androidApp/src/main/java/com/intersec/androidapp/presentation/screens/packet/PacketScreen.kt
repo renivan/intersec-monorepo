@@ -59,7 +59,7 @@ fun PacketScreen(
                         "PACKET X-RAY", 
                         color = MaterialTheme.colorScheme.primary, 
                         fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = FontFamily.Default
                     ) 
                 },
                 navigationIcon = {
@@ -88,20 +88,20 @@ fun PacketScreen(
                         OutlinedTextField(
                             value = protocol,
                             onValueChange = { protocol = it },
-                            label = { Text("PROTO", fontFamily = FontFamily.Monospace, fontSize = 10.sp) },
+                            label = { Text("PROTO", fontFamily = FontFamily.Default, fontSize = 10.sp) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             shape = RoundedCornerShape(2.dp),
-                            textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                            textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Default, fontSize = 12.sp)
                         )
                         OutlinedTextField(
                             value = host,
                             onValueChange = { host = it },
-                            label = { Text("HOST/IP", fontFamily = FontFamily.Monospace, fontSize = 10.sp) },
+                            label = { Text("HOST/IP", fontFamily = FontFamily.Default, fontSize = 10.sp) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             shape = RoundedCornerShape(2.dp),
-                            textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                            textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Default, fontSize = 12.sp)
                         )
                     }
                     
@@ -110,11 +110,11 @@ fun PacketScreen(
                     OutlinedTextField(
                         value = searchText,
                         onValueChange = { searchText = it },
-                        label = { Text("SEARCH PAYLOAD...", fontFamily = FontFamily.Monospace, fontSize = 10.sp) },
+                        label = { Text("SEARCH PAYLOAD...", fontFamily = FontFamily.Default, fontSize = 10.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(2.dp),
-                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                        textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Default, fontSize = 12.sp)
                     )
                     
                     Spacer(modifier = Modifier.height(12.dp))
@@ -123,11 +123,11 @@ fun PacketScreen(
                         OutlinedTextField(
                             value = packetNumberText,
                             onValueChange = { if (it.all { char -> char.isDigit() }) packetNumberText = it },
-                            label = { Text("PKT #", fontFamily = FontFamily.Monospace, fontSize = 10.sp) },
+                            label = { Text("PKT #", fontFamily = FontFamily.Default, fontSize = 10.sp) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             shape = RoundedCornerShape(2.dp),
-                            textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                            textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Default, fontSize = 12.sp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Button(
@@ -147,7 +147,7 @@ fun PacketScreen(
                             shape = RoundedCornerShape(4.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("SCAN", fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color.Black)
+                            Text("SCAN", fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default, color = Color.Black)
                         }
                     }
                 }
@@ -158,7 +158,7 @@ fun PacketScreen(
             Text(
                 text = "OPERATIONAL READOUT: ${state.totalItems} PACKETS FOUND",
                 style = MaterialTheme.typography.labelSmall,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FontFamily.Default,
                 color = MaterialTheme.colorScheme.primary
             )
 
@@ -192,12 +192,12 @@ fun PacketScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("#${item.packetNumber}", style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Monospace, color = Color.White)
+                                Text("#${item.packetNumber}", style = MaterialTheme.typography.titleSmall, fontFamily = FontFamily.Default, color = Color.White)
                                 Text(
                                     item.highestProtocol ?: "N/A",
                                     color = MaterialTheme.colorScheme.primary,
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = FontFamily.Default,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -206,7 +206,7 @@ fun PacketScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 2,
                                 color = Color.Gray,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = FontFamily.Default,
                                 fontSize = 12.sp
                             )
                         }

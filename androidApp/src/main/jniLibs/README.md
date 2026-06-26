@@ -6,8 +6,8 @@ Esta pasta contêm as bibliotecas nativas compiladas do projeto Native (`.so`).
 
 Para que a integração funcione, você deve compilar o projeto Native para Android e copiar o arquivo `libwireshark_mobile_core.so` para as pastas correspondentes abaixo:
 
-- **arm64-v8a/**: Dispositivos físicos modernos (64-bit).
-- **armeabi-v7a/**: Dispositivos físicos antigos (32-bit).
+- **arm64-v8a/**: -Dispositivos físicos modernos (64-bit).
+- **armeabi-v7a/**: -Dispositivos físicos antigos (32-bit).
 - **x86_64/**: Emuladores Android em computadores modernos.
 - **x86/**: Emuladores Android antigos.
 

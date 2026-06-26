@@ -12,61 +12,55 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val MilitaryColorScheme = darkColorScheme(
-    primary = TacticalGreen,
-    onPrimary = Color.Black,
-    secondary = RadarGray,
-    onSecondary = TacticalGreen,
-    tertiary = WarningOrange,
-    background = StealthGray,
-    surface = RadarGray,
-    error = AlertRed
+private val CyberColorScheme = darkColorScheme(
+    primary = OliveGreen,
+    onPrimary = Color.White,
+    secondary = SoftGreen,
+    background = CyberBlack,
+    surface = CyberGray,
+    error = Color(0xFFCF6679)
 )
 
 private val TechMasterColorScheme = darkColorScheme(
-    primary = MasterPrimary,
-    onPrimary = Color.White,
-    secondary = MasterCyan,
+    primary = MasterSoftCyan,
+    onPrimary = Color.Black,
+    secondary = MasterNavy,
     background = MasterBackground,
     surface = MasterSurface,
     error = Color.Red
 )
 
 private val MinimalColorScheme = darkColorScheme(
-    primary = MinimalOrange,
-    onPrimary = Color.White,
+    primary = SoftOrange,
+    onPrimary = Color.Black,
     secondary = MinimalWhite,
     background = MinimalBlack,
-    surface = MinimalGray,
+    surface = MinimalSurface,
     error = Color.Red
 )
 
-private val MaterialLightColorScheme = lightColorScheme(
-    primary = MaterialPrimary,
-    background = MaterialBackground,
-    surface = MaterialSurface,
-    error = MaterialError
+private val StudioDarkColorScheme = darkColorScheme(
+    primary = StudioDarkPrimary,
+    onPrimary = Color.White,
+    secondary = StudioDarkSelection,
+    background = StudioDarkBackground,
+    surface = StudioDarkSurface,
+    error = StudioDarkError,
+    onSurface = StudioDarkText
 )
 
 @Composable
 fun InterSecTheme(
-    themeType: AppThemeType = AppThemeType.TACTICAL_MILITARY,
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeType: AppThemeType = AppThemeType.CYBER_INTERSECURITY,
+    darkTheme: Boolean = true,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (themeType) {
-        AppThemeType.TACTICAL_MILITARY -> MilitaryColorScheme
+        AppThemeType.CYBER_INTERSECURITY -> CyberColorScheme
         AppThemeType.TECH_MASTER -> TechMasterColorScheme
-        AppThemeType.MINIMAL -> MinimalColorScheme
-        AppThemeType.MATERIAL_STANDARD -> {
-            val context = LocalContext.current
-            if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            } else {
-                if (darkTheme) darkColorScheme(primary = MaterialPrimary) else MaterialLightColorScheme
-            }
-        }
+        AppThemeType.MINIMAL_ORANGE -> MinimalColorScheme
+        AppThemeType.DARK_NIGHT -> StudioDarkColorScheme
     }
 
     val view = LocalView.current
@@ -75,12 +69,13 @@ fun InterSecTheme(
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
             val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightStatusBars = false
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = AppTypography,
         content = content
     )
 }

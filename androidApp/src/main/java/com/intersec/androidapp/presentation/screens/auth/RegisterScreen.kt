@@ -78,7 +78,7 @@ fun RegisterScreen(
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Black,
-                fontFamily = FontFamily.Monospace
+                fontFamily = FontFamily.Default
             )
 
             Spacer(Modifier.height(40.dp))
@@ -86,7 +86,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { viewModel.onEmailChange(it) },
-                label = { Text("ASSIGN OPERATOR EMAIL", fontFamily = FontFamily.Monospace) },
+                label = { Text("ASSIGN OPERATOR EMAIL", fontFamily = FontFamily.Default) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 shape = RoundedCornerShape(4.dp),
@@ -101,7 +101,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("SET SECURITY CLEARANCE", fontFamily = FontFamily.Monospace) },
+                label = { Text("SET SECURITY CLEARANCE", fontFamily = FontFamily.Default) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 visualTransformation = PasswordVisualTransformation(),
@@ -117,7 +117,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text("CONFIRM CLEARANCE", fontFamily = FontFamily.Monospace) },
+                label = { Text("CONFIRM CLEARANCE", fontFamily = FontFamily.Default) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 visualTransformation = PasswordVisualTransformation(),
@@ -135,7 +135,7 @@ fun RegisterScreen(
                     displayError,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelSmall,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Default
                 )
             }
 
@@ -158,7 +158,7 @@ fun RegisterScreen(
                 if (state.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black, strokeWidth = 2.dp)
                 } else {
-                    Text("INITIALIZE OPERATOR", fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Monospace, color = Color.Black)
+                    Text("INITIALIZE OPERATOR", fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Default, color = Color.Black)
                 }
             }
 
@@ -169,7 +169,7 @@ fun RegisterScreen(
                     "PROTECTED BY GOOGLE PLAY BILLING",
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                     style = MaterialTheme.typography.labelSmall,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Default
                 )
             }
         }

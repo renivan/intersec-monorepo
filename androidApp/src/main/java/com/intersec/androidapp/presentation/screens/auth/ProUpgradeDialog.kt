@@ -16,12 +16,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.platform.LocalContext
+import com.intersec.androidapp.MainActivity
 
 @Composable
 fun ProUpgradeDialog(
     onDismiss: () -> Unit,
     onUpgrade: () -> Unit
 ) {
+    val context = LocalContext.current
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -49,7 +52,7 @@ fun ProUpgradeDialog(
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = FontFamily.Default,
                     textAlign = TextAlign.Center
                 )
                 
@@ -59,23 +62,27 @@ fun ProUpgradeDialog(
                     "ADVANCED THREAT ANALYSIS AND PRO-LEVEL FILTERS ARE RESTRICTED TO ELITE OPERATORS.",
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = FontFamily.Default,
                     textAlign = TextAlign.Center
                 )
                 
                 Spacer(Modifier.height(24.dp))
                 
                 Button(
-                    onClick = onUpgrade,
+                    onClick = {
+                        val activity = context as? MainActivity
+                        activity?.startBillingFlow()
+                        onUpgrade()
+                    },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(4.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("ACTIVATE PRO LICENSE", fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color.Black)
+                    Text("ACTIVATE PRO LICENSE", fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default, color = Color.Black)
                 }
                 
                 TextButton(onClick = onDismiss) {
-                    Text("REMAIN BASIC", color = Color.Gray, fontFamily = FontFamily.Monospace, fontSize = 10.sp)
+                    Text("REMAIN BASIC", color = Color.Gray, fontFamily = FontFamily.Default, fontSize = 10.sp)
                 }
             }
         }

@@ -73,7 +73,7 @@ fun ImportLogScreen(
                                 text = "[${entry.timestamp}]",
                                 color = Color(0xFF888888),
                                 fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = FontFamily.Default,
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             
@@ -88,7 +88,7 @@ fun ImportLogScreen(
                                 text = entry.message,
                                 color = color,
                                 fontSize = 13.sp,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = FontFamily.Default,
                                 fontWeight = if (entry.level != LogLevel.INFO) FontWeight.Bold else FontWeight.Normal
                             )
                         }

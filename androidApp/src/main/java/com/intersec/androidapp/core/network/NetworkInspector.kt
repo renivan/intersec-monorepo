@@ -33,11 +33,15 @@ object NetworkInspector {
     }
 
     private fun inferTypeFromName(name: String): String {
+        val lowerName = name.lowercase()
         return when {
-            name.contains("wlan", ignoreCase = true) -> "Wi-Fi"
-            name.contains("eth", ignoreCase = true) -> "Ethernet"
-            name.contains("rmnet", ignoreCase = true) || name.contains("pdp", ignoreCase = true) -> "Dados Móveis"
-            else -> "Hardware"
+            lowerName.contains("wlan") || lowerName.contains("ap") || lowerName.contains("tiwlan") -> "Wi-Fi"
+            lowerName.contains("eth") || lowerName.contains("enp") || lowerName.contains("eno") -> "Ethernet"
+            lowerName.contains("rmnet") || lowerName.contains("pdp") || lowerName.contains("ccmni") || 
+            lowerName.contains("ppp") || lowerName.contains("uwb") -> "Dados Móveis"
+            lowerName.contains("tun") || lowerName.contains("ppp") || lowerName.contains("tap") -> "VPN/Tunnel"
+            lowerName.contains("rndis") || lowerName.contains("usb") -> "USB Tethering"
+            else -> "Hardware/System"
         }
     }
 
@@ -52,18 +56,37 @@ object NetworkInspector {
         val isConnected = capabilities != null
 
         capabilities?.let { cap ->
-            if (cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                typeName = "Wi-Fi"
-                details = "Wireless Link"
-                interfaceName = findInterfaceByPattern(listOf("wlan", "ap", "tiwlan"))
-            } else if (cap.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                typeName = getCellularGeneration(context)
-                details = "Rede de Dados Móvel"
-                interfaceName = findInterfaceByPattern(listOf("rmnet", "pdp", "ppp"))
-            } else if (cap.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
-                typeName = "Ethernet"
-                details = "Cabo de Rede (Emulador)"
-                interfaceName = findInterfaceByPattern(listOf("eth", "enp"))
+            when {
+                cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                    typeName = "Wi-Fi"
+                    details = "Conexão Wireless"
+                    interfaceName = findInterfaceByPattern(listOf("wlan", "ap", "tiwlan"))
+                }
+                cap.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                    typeName = getCellularGeneration(context)
+                    details = "Rede de Operadora"
+                    interfaceName = findInterfaceByPattern(listOf("rmnet", "pdp", "ppp", "ccmni"))
+                }
+                cap.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                    typeName = "Ethernet"
+                    details = "Cabo/Emulador"
+                    interfaceName = findInterfaceByPattern(listOf("eth", "enp", "eno"))
+                }
+                cap.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> {
+                    typeName = "VPN"
+                    details = "Túnel Seguro Ativo"
+                    interfaceName = findInterfaceByPattern(listOf("tun", "tap", "ppp"))
+                }
+                cap.hasTransport(NetworkCapabilities.TRANSPORT_USB) -> {
+                    typeName = "USB"
+                    details = "Tethering via USB"
+                    interfaceName = findInterfaceByPattern(listOf("rndis", "usb"))
+                }
+                else -> {
+                    typeName = "Outro"
+                    details = "Interface Desconhecida"
+                    interfaceName = "net0"
+                }
             }
         }
 
@@ -94,8 +117,14 @@ object NetworkInspector {
             when (networkType) {
                 TelephonyManager.NETWORK_TYPE_NR -> "5G/6G"
                 TelephonyManager.NETWORK_TYPE_LTE -> "4G/LTE"
-                TelephonyManager.NETWORK_TYPE_HSPAP, TelephonyManager.NETWORK_TYPE_HSPA -> "3G/HSPA"
-                else -> "4G"
+                TelephonyManager.NETWORK_TYPE_HSPAP, TelephonyManager.NETWORK_TYPE_HSPA,
+                TelephonyManager.NETWORK_TYPE_HSDPA, TelephonyManager.NETWORK_TYPE_HSUPA -> "3G/HSPA+"
+                TelephonyManager.NETWORK_TYPE_UMTS, TelephonyManager.NETWORK_TYPE_EVDO_0,
+                TelephonyManager.NETWORK_TYPE_EVDO_A, TelephonyManager.NETWORK_TYPE_EVDO_B -> "3G"
+                TelephonyManager.NETWORK_TYPE_GPRS, TelephonyManager.NETWORK_TYPE_EDGE,
+                TelephonyManager.NETWORK_TYPE_CDMA, TelephonyManager.NETWORK_TYPE_1xRTT,
+                TelephonyManager.NETWORK_TYPE_IDEN -> "2G/GPRS/EDGE"
+                else -> "Dados Móveis"
             }
         } catch (e: Exception) {
             "4G"

@@ -1,6 +1,7 @@
 ﻿package com.intersec.androidapp.core.vpn
 
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
@@ -27,6 +28,9 @@ class InterSecVpnService : VpnService() {
         if (vpnInterface != null) return
 
         try {
+            val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+            val activeNetwork = connectivityManager.activeNetwork
+
             val builder = Builder()
                 .setSession("InterSec Sentinel")
                 .addAddress("10.8.0.2", 32)
@@ -36,10 +40,16 @@ class InterSecVpnService : VpnService() {
                 .addDisallowedApplication(packageName) // Evita loop infinito
                 .setBlocking(false)
 
+            // Trava a conexão na rede atual para evitar bypass e garantir estabilidade (MVP)
+            activeNetwork?.let {
+                builder.setUnderlyingNetworks(arrayOf(it))
+                Log.d("InterSecVPN", "Conexão travada no túnel Sentinel para a rede: $it")
+            }
+
             vpnInterface = builder.establish()
             
             vpnInterface?.let { pfd ->
-                val fd = pfd.fd
+                val fd = pfd.detachFd() // Entrega a posse do FD para o motor Native (Evita conflito fdsan)
                 Log.d("InterSecVPN", "Túnel estabelecido (FD $fd). Conectando Guardian Engine...")
                 
                 val success = bridgeClient.attachVpnTunnel(fd)
@@ -48,6 +58,8 @@ class InterSecVpnService : VpnService() {
                     updateNotification()
                 } else {
                     Log.e("InterSecVPN", "Erro: O motor Native recusou a conexão do túnel.")
+                    // Se falhar, fechamos o FD manualmente para não vazar
+                    try { ParcelFileDescriptor.adoptFd(fd).close() } catch (_: Exception) {}
                     stopVpn()
                 }
             }

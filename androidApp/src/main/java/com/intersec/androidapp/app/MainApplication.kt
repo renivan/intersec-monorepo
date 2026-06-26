@@ -1,6 +1,8 @@
 package com.intersec.androidapp.app
 
 import android.app.Application
+import com.google.android.gms.ads.MobileAds
+import com.intersec.androidapp.core.ads.AdManager
 import com.google.firebase.Firebase
 import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
@@ -27,6 +29,11 @@ class MainApplication : Application() {
         Firebase.appCheck.installAppCheckProviderFactory(
             PlayIntegrityAppCheckProviderFactory.getInstance(),
         )
+
+        // Inicializa o Mobile Ads SDK
+        MobileAds.initialize(this) {
+            AdManager.preloadRewardedAd(this)
+        }
 
         appModule = AppModule(this)
     }

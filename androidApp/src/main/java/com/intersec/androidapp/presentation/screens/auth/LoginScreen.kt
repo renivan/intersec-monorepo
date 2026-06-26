@@ -90,14 +90,14 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Black,
-                fontFamily = FontFamily.Monospace
+                fontFamily = FontFamily.Default
             )
             
             Text(
                 "SECURE CHANNEL INITIALIZATION",
                 color = Color.Gray,
                 style = MaterialTheme.typography.labelSmall,
-                fontFamily = FontFamily.Monospace
+                fontFamily = FontFamily.Default
             )
 
             Spacer(Modifier.height(40.dp))
@@ -106,7 +106,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { viewModel.onEmailChange(it) },
-                label = { Text("OPERATOR EMAIL", fontFamily = FontFamily.Monospace) },
+                label = { Text("OPERATOR EMAIL", fontFamily = FontFamily.Default) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 shape = RoundedCornerShape(4.dp),
@@ -124,7 +124,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("SECURITY CLEARANCE (senha)", fontFamily = FontFamily.Monospace) },
+                label = { Text("SECURITY CLEARANCE (senha)", fontFamily = FontFamily.Default) },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 visualTransformation = PasswordVisualTransformation(),
@@ -143,7 +143,7 @@ fun LoginScreen(
                     state.error!!,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelSmall,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Default
                 )
             }
 
@@ -160,7 +160,7 @@ fun LoginScreen(
                 if (state.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black, strokeWidth = 2.dp)
                 } else {
-                    Text("AUTHORIZE ACCESS", fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Monospace, color = Color.Black)
+                    Text("AUTHORIZE ACCESS", fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Default, color = Color.Black)
                 }
             }
 
@@ -172,7 +172,7 @@ fun LoginScreen(
                     "NEW OPERATOR? REQUEST CREDENTIALS",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelSmall,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = FontFamily.Default
                 )
             }
         }

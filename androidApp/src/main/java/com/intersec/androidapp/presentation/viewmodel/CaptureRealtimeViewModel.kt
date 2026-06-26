@@ -53,14 +53,19 @@ class CaptureRealtimeViewModel(
     }
 
     private fun detectNetwork() {
-        val info = NetworkInspector.getActiveNetworkInfo(MainApplication.instance)
-        val allInterfaces = NetworkInspector.getAvailableInterfaces()
-        _uiState.update { 
-            it.copy(
-                networkInterface = info.interfaceName,
-                networkName = "${info.typeName} - ${info.details}",
-                availableInterfaces = allInterfaces
-            )
+        viewModelScope.launch {
+            while (isActive) {
+                val info = NetworkInspector.getActiveNetworkInfo(MainApplication.instance)
+                val allInterfaces = NetworkInspector.getAvailableInterfaces()
+                _uiState.update { 
+                    it.copy(
+                        networkInterface = info.interfaceName,
+                        networkName = "${info.typeName} - ${info.details}",
+                        availableInterfaces = allInterfaces
+                    )
+                }
+                delay(2.seconds)
+            }
         }
     }
 

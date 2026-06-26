@@ -84,7 +84,7 @@ fun FlowDetailScreen(
                         }
                         Spacer(Modifier.height(12.dp))
                         Text("ENDPOINTS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(item.endpoints, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
+                        Text(item.endpoints, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Default)
                     }
                 }
 

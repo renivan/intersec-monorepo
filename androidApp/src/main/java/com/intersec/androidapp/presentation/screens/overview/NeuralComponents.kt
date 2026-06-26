@@ -90,7 +90,7 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = primaryColor,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = FontFamily.Default,
             fontSize = 8.sp
         )
     }
@@ -107,8 +107,8 @@ fun OverviewMiniCard(modifier: Modifier, label: String, value: String, icon: Ima
         Column(Modifier.padding(12.dp)) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(8.dp))
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, color = Color.White)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontFamily = FontFamily.Monospace)
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, fontFamily = FontFamily.Default, color = Color.White)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontFamily = FontFamily.Default)
         }
     }
 }

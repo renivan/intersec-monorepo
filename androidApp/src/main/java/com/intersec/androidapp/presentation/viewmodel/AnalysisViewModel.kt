@@ -10,7 +10,10 @@ import com.intersec.androidapp.presentation.state.AnalysisUiState
 import com.intersec.androidapp.presentation.state.ImportLogEntry
 import com.intersec.androidapp.presentation.state.LogLevel
 import com.intersec.androidapp.core.network.ThreatIntelManager
+import com.intersec.androidapp.core.network.NetworkInspector
+import com.intersec.androidapp.core.ads.AdManager
 import com.intersec.androidapp.ui.theme.AppThemeType
+import com.intersec.androidapp.presentation.state.NetworkState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,8 +64,12 @@ class AnalysisViewModel(
         }.launchIn(viewModelScope)
 
         securitySettings.themeType.onEach { typeId ->
-            val theme = AppThemeType.entries.find { it.id == typeId } ?: AppThemeType.TACTICAL_MILITARY
+            val theme = AppThemeType.entries.find { it.id == typeId } ?: AppThemeType.CYBER_INTERSECURITY
             _uiState.update { it.copy(themeType = theme) }
+        }.launchIn(viewModelScope)
+
+        securitySettings.rewardedMinutesMonth.onEach { mins ->
+            _uiState.update { it.copy(rewardedMinutesMonth = mins) }
         }.launchIn(viewModelScope)
     }
 
@@ -109,22 +116,43 @@ class AnalysisViewModel(
         }
     }
 
+    fun addRewardTime() {
+        viewModelScope.launch {
+            val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH)
+            securitySettings.addRewardedMinute(currentMonth)
+        }
+    }
+
+    fun setShowAdRewardDialog(show: Boolean) {
+        _uiState.update { it.copy(showAdRewardDialog = show) }
+    }
+
     private fun startPolling() {
         pollJob?.cancel()
         pollJob = viewModelScope.launch {
             while (true) {
-                delay(500.milliseconds)
+                updateNetworkStatus()
+                delay(1000.milliseconds)
                 val state = _uiState.value
                 // Só atualiza se houver uma sessão ativa e não estiver em processo de carga inicial
                 if ((state.session != null && !state.isLoading)) {
-                    while (true) {
-                        delay(500.milliseconds)
-                        // Re-checa se a sessão ainda existe antes de atualizar
-                        if (_uiState.value.session == null) break
-                        refreshActiveSession()
-                    }
+                    refreshActiveSession()
                 }
             }
+        }
+    }
+
+    private fun updateNetworkStatus() {
+        val info = NetworkInspector.getActiveNetworkInfo(MainApplication.instance)
+        _uiState.update { 
+            it.copy(
+                networkState = NetworkState(
+                    interfaceName = info.interfaceName,
+                    typeName = info.typeName,
+                    details = info.details,
+                    isConnected = info.isConnected
+                )
+            )
         }
     }
 
@@ -215,6 +243,18 @@ class AnalysisViewModel(
     fun clearSession() {
         addLog("Sessão limpa pelo usuário.")
         _uiState.value = AnalysisUiState()
+    }
+
+    fun blockIp(ip: String, reason: String = "MANUAL BLOCK") {
+        val newRule = com.intersec.androidapp.presentation.state.FirewallRule(target = ip, reason = reason)
+        _uiState.update { it.copy(firewallRules = it.firewallRules + newRule) }
+        addLog("Firewall: IP $ip bloqueado. Motivo: $reason", LogLevel.WARNING)
+        // TODO: Persistir e sincronizar com o motor nativo
+    }
+
+    fun removeFirewallRule(rule: com.intersec.androidapp.presentation.state.FirewallRule) {
+        _uiState.update { it.copy(firewallRules = it.firewallRules - rule) }
+        addLog("Firewall: Regra para ${rule.target} removida.", LogLevel.INFO)
     }
 
 }

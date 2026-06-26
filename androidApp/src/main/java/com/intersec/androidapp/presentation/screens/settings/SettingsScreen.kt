@@ -1,28 +1,28 @@
-﻿package com.intersec.androidapp.presentation.screens.settings
+package com.intersec.androidapp.presentation.screens.settings
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
-import androidx.compose.runtime.*
 import com.intersec.androidapp.presentation.screens.auth.ProUpgradeDialog
 import com.intersec.androidapp.ui.theme.AppThemeType
 import androidx.compose.foundation.clickable
@@ -56,7 +56,7 @@ fun SettingsScreen(
                         "SYSTEM SETTINGS", 
                         color = MaterialTheme.colorScheme.primary, 
                         fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = FontFamily.Default
                     ) 
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -139,7 +139,7 @@ fun SettingsScreen(
                 "CHOOSE YOUR OPERATIONAL SKIN. ALTERNATIVE THEMES REQUIRE PRO CLEARANCE.",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = FontFamily.Default,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -195,7 +195,7 @@ fun ThemeOptionItem(
             color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace
+            fontFamily = FontFamily.Default
         )
     }
 }
@@ -208,7 +208,7 @@ fun SectionHeader(title: String) {
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Black,
-            fontFamily = FontFamily.Monospace
+            fontFamily = FontFamily.Default
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), thickness = 1.dp)
     }
@@ -230,8 +230,8 @@ fun SettingToggleItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            Text(description, color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+            Text(title, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+            Text(description, color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Default)
         }
         Switch(
             checked = isActive,
@@ -243,4 +243,3 @@ fun SettingToggleItem(
         )
     }
 }
-

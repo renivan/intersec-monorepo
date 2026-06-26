@@ -1,8 +1,8 @@
 package com.intersec.androidapp.ui.theme
 
 enum class AppThemeType(val id: Int, val label: String) {
-    TACTICAL_MILITARY(0, "Militar de Elite"),
+    CYBER_INTERSECURITY(0, "Ciber Intersecurity"),
     TECH_MASTER(1, "Master Navy/Cyan"),
-    MINIMAL(2, "Minimal Orange"),
-    MATERIAL_STANDARD(3, "Android Material")
+    MINIMAL_ORANGE(2, "Minimal Orange"),
+    DARK_NIGHT(3, "Android Studio Dark")
 }
