@@ -1,13 +1,17 @@
-package com.intersec.androidapp.di
+﻿package com.intersec.androidapp.di
 
 import com.intersec.androidapp.app.MainApplication
-import com.intersec.androidapp.domain.repository.RustAnalysisRepository
+import com.intersec.androidapp.domain.repository.CoreAnalysisRepository
 
 /**
  * Delegado para acesso rápido às dependências globais.
  */
 object AppBootstrap {
 
-    val rustAnalysisRepository: RustAnalysisRepository
-        get() = MainApplication.appModule.rustAnalysisRepository
+    val coreAnalysisRepository: CoreAnalysisRepository
+        get() = MainApplication.appModule.coreAnalysisRepository
+
+    val captureViewModel: com.intersec.androidapp.presentation.viewmodel.CaptureRealtimeViewModel
+        get() = MainApplication.appModule.sharedCaptureViewModel
 }
+

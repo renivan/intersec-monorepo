@@ -25,9 +25,9 @@ class MainApplication : Application() {
 
         // Instala a factory do Play Integrity
         Firebase.appCheck.installAppCheckProviderFactory(
-            PlayIntegrityAppCheckProviderFactory.getInstance()
+            PlayIntegrityAppCheckProviderFactory.getInstance(),
         )
 
-        appModule = AppModule()
+        appModule = AppModule(this)
     }
 }

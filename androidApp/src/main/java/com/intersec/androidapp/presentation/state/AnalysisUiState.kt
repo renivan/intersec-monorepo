@@ -1,6 +1,7 @@
 package com.intersec.androidapp.presentation.state
 
 import com.intersec.androidapp.data.model.dto.*
+import com.intersec.androidapp.ui.theme.AppThemeType
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -26,5 +27,11 @@ data class AnalysisUiState(
     val packets: List<PacketDto> = emptyList(),
     val flows: List<FlowDto> = emptyList(),
     val error: String? = null,
-    val importLogs: List<ImportLogEntry> = emptyList()
+    val importLogs: List<ImportLogEntry> = emptyList(),
+    
+    val isShieldActive: Boolean = true,
+    val isKillSwitchOn: Boolean = false,
+    val securityLevel: Int = 1,
+    val userTier: Int = 0, // 0=FREE, 1=PRO
+    val themeType: AppThemeType = AppThemeType.TACTICAL_MILITARY
 )

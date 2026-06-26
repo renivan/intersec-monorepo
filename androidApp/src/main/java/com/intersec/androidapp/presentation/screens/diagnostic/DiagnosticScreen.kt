@@ -1,10 +1,12 @@
-package com.intersec.androidapp.presentation.screens.diagnostic
+﻿package com.intersec.androidapp.presentation.screens.diagnostic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -18,7 +20,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.intersec.androidapp.core.bridge.RustBridgeClient
+import com.intersec.androidapp.core.bridge.NativeBridgeClient
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -27,7 +29,8 @@ import kotlin.time.Duration.Companion.milliseconds
 fun DiagnosticScreen(
     onBack: () -> Unit
 ) {
-    val bridge = remember { RustBridgeClient() }
+    val bridge = remember { NativeBridgeClient() }
+    val scrollState = rememberScrollState()
     var isRunningTest by remember { mutableStateOf(false) }
     val testLogs = remember { mutableStateListOf<String>() }
     var systemStatus by remember { mutableStateOf("READY") }
@@ -48,6 +51,7 @@ fun DiagnosticScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
             // ===== STATUS CARD =====
@@ -118,14 +122,14 @@ fun DiagnosticScreen(
                 }
             }
 
-            // ===== LÓGICA DE TESTE (SIMULADA NO APP CHAMANDO RUST REAL) =====
+            // ===== LÃ“GICA DE TESTE (SIMULADA NO APP CHAMANDO Native REAL) =====
             LaunchedEffect(isRunningTest) {
                 if (isRunningTest) {
                     try {
                         delay(500.milliseconds)
                         testLogs.add("> [1/4] Validando JNI Bridge (@FastNative)...")
                         val ping = bridge.ping()
-                        testLogs.add("  + Resposta Rust: $ping")
+                        testLogs.add("  + Resposta Native: $ping")
                         
                         delay(800.milliseconds)
                         testLogs.add("> [2/4] Testando Ingestão e Interpretação...")
@@ -138,7 +142,7 @@ fun DiagnosticScreen(
                         }
 
                         delay(800.milliseconds)
-                        testLogs.add("> [3/4] Validando Identificação de Protocolos...")
+                        testLogs.add("> [3/4] Validando IdentificaÃ§Ã£o de Protocolos...")
                         val overview = bridge.getCaptureOverview()
                         testLogs.add("  + Inteligência detectada: ${overview.length} bytes de metadados.")
 
@@ -150,7 +154,7 @@ fun DiagnosticScreen(
                         testLogs.add("> --- TESTE FINALIZADO COM 100% DE SUCESSO ---")
                     } catch (e: Exception) {
                         systemStatus = "FAIL"
-                        testLogs.add("!!! ERRO CRÍTICO: ${e.message}")
+                        testLogs.add("!!! ERRO CRÃTICO: ${e.message}")
                     } finally {
                         isRunningTest = false
                     }
@@ -159,3 +163,4 @@ fun DiagnosticScreen(
         }
     }
 }
+

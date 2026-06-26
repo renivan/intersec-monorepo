@@ -1,4 +1,4 @@
-package com.intersec.androidapp.presentation.viewmodel
+﻿package com.intersec.androidapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class SessionListViewModel : ViewModel() {
 
-    private val repository = AppBootstrap.rustAnalysisRepository
+    private val repository = AppBootstrap.coreAnalysisRepository
 
     private val _uiState = MutableStateFlow(SessionUiState())
     val uiState: StateFlow<SessionUiState> = _uiState.asStateFlow()
@@ -81,3 +81,4 @@ class SessionListViewModel : ViewModel() {
     }
 
 }
+

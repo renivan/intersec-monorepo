@@ -1,9 +1,9 @@
-package com.intersec.androidapp.presentation.viewmodel
+﻿package com.intersec.androidapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.intersec.androidapp.di.AppBootstrap
-import com.intersec.androidapp.core.bridge.RustPacketQuery
+import com.intersec.androidapp.core.bridge.NativePacketQuery
 import com.intersec.androidapp.presentation.state.PacketUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,13 +12,13 @@ import kotlinx.coroutines.launch
 
 class PacketListViewModel : ViewModel() {
 
-    private val repository = AppBootstrap.rustAnalysisRepository
-    private val pageSize = 100 // Aumentado agora que Rust é eficiente
+    private val repository = AppBootstrap.coreAnalysisRepository
+    private val pageSize = 100 // Aumentado agora que Native Ã© eficiente
 
     private val _uiState = MutableStateFlow(PacketUiState())
     val uiState: StateFlow<PacketUiState> = _uiState.asStateFlow()
 
-    private var currentQuery = RustPacketQuery()
+    private var currentQuery = NativePacketQuery()
 
     init {
         loadPackets()
@@ -30,7 +30,7 @@ class PacketListViewModel : ViewModel() {
         text: String? = null,
         packetNumber: Long? = null,
     ) {
-        currentQuery = RustPacketQuery(
+        currentQuery = NativePacketQuery(
             protocol = protocol,
             host = host,
             text = text,
@@ -56,8 +56,8 @@ class PacketListViewModel : ViewModel() {
                 errorMessage = null,
             )
 
-            // FASE 2: O motor Rust agora filtra e fatia os dados. 
-            // O Android recebe apenas os itens da página solicitada.
+            // FASE 2: O motor Native agora filtra e fatia os dados. 
+            // O Android recebe apenas os itens da pÃ¡gina solicitada.
             repository.queryPackets(currentQuery).fold(
                 onSuccess = { searchResult ->
                     val updatedItems = if (isNewSearch) {
@@ -83,3 +83,4 @@ class PacketListViewModel : ViewModel() {
         }
     }
 }
+

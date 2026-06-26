@@ -1,4 +1,4 @@
-package com.intersec.androidapp.presentation.screens.overview
+﻿package com.intersec.androidapp.presentation.screens.overview
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -70,7 +70,7 @@ fun GeographicMapScreen(
                         drawLine(gridColor, Offset(0f, y), Offset(size.width, y))
                     }
 
-                    // Desenha Pontos de Conexão Reais vindos do Rust
+                    // Desenha Pontos de ConexÃ£o Reais vindos do Native
                     state.overview?.geoPoints?.forEach { point ->
                         // Mapeamento simples Lat/Lon para X/Y
                         val x = ((point.longitude + 180) / 360f) * size.width
@@ -99,7 +99,7 @@ fun GeographicMapScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ===== LISTA DE PAÍSES IDENTIFICADOS =====
+            // ===== LISTA DE PAÃSES IDENTIFICADOS =====
             SectionHeader("Destinos Detectados")
             
             if (state.overview?.geoPoints?.isEmpty() == true) {
@@ -134,8 +134,9 @@ fun CountryItem(name: String, code: String, count: Int) {
 }
 
 fun getFlagEmoji(countryCode: String): String {
-    if (countryCode.length != 2) return "🌐"
+    if (countryCode.length != 2) return "ðŸŒ"
     val firstLetter = Character.codePointAt(countryCode.uppercase(), 0) - 0x41 + 0x1F1E6
     val secondLetter = Character.codePointAt(countryCode.uppercase(), 1) - 0x41 + 0x1F1E6
     return String(Character.toChars(firstLetter)) + String(Character.toChars(secondLetter))
 }
+

@@ -1,23 +1,25 @@
-package com.intersec.androidapp.core.service
+﻿package com.intersec.androidapp.core.service
 
 import android.app.*
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.intersec.androidapp.core.bridge.RustBridgeClient
+import com.intersec.androidapp.core.bridge.NativeBridgeClient
 import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Guardian Service: Mantém o motor Rust vivo em background para análise contínua.
+ * Guardian Service: Mantém o motor Native vivo em background para análise contínua.
  */
 class AnalysisForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val bridgeClient = RustBridgeClient()
+    private val bridgeClient = NativeBridgeClient()
     private var isRunning = false
 
     companion object {
@@ -33,7 +35,14 @@ class AnalysisForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!isRunning) {
             isRunning = true
-            startForeground(NOTIFICATION_ID, createNotification("Monitoramento Ativo", "InterSec está vigiando sua rede..."))
+            val notification = createNotification("Monitoramento Ativo", "InterSec está vigiando sua rede...")
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+            
             startAnalysisLoop()
         }
         return START_STICKY
@@ -43,15 +52,15 @@ class AnalysisForegroundService : Service() {
         serviceScope.launch {
             while (isRunning) {
                 try {
-                    // Polling do motor Rust para detecção de anomalias em background
+                    // Polling do motor Native para detecção de anomalias em background
                     val overviewJson = bridgeClient.getCaptureOverview()
                     // Aqui implementaríamos a lógica de notificação se o risk_score subir
                     
                     updateNotification(overviewJson)
                     
-                    delay(5000) // Verifica a cada 5 segundos em background
+                    delay(5000L.milliseconds) // Verifica a cada 5 segundos em background
                 } catch (e: Exception) {
-                    delay(10000)
+                    delay(10000L.milliseconds)
                 }
             }
         }
@@ -67,7 +76,7 @@ class AnalysisForegroundService : Service() {
 
         val notification = createNotification(
             "InterSec Sentinel", 
-            if (riskScore > 50) "⚠️ ALERTA: Ameaça detectada na rede ($riskScore%)" else "Análise ativa. Rede Protegida."
+            if (riskScore > 50) "âš ï¸ ALERTA: Ameaça detectada na rede ($riskScore%)" else "Análise ativa. Rede Protegida."
         )
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, notification)
@@ -78,7 +87,7 @@ class AnalysisForegroundService : Service() {
             val shortcutManager = getSystemService(ShortcutManager::class.java)
             if (score > 50) {
                 val shortcut = ShortcutInfo.Builder(this, "alert_id")
-                    .setShortLabel("⚠️ AMEAÇA!")
+                    .setShortLabel("âš ï¸ AMEAÇA!")
                     .setLongLabel("Ameaça detectada - Toque para agir")
                     .setIcon(Icon.createWithResource(this, android.R.drawable.ic_dialog_alert))
                     .setIntent(Intent(this, Class.forName("com.intersec.androidapp.MainActivity")).apply { action = "OPEN_ALERTS" })
@@ -100,7 +109,7 @@ class AnalysisForegroundService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_lock) // Temporário até termos o ícone master
+            .setSmallIcon(android.R.drawable.ic_lock_idle_lock) // Temporário até termos o Ã­cone master
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
@@ -129,3 +138,4 @@ class AnalysisForegroundService : Service() {
         super.onDestroy()
     }
 }
+

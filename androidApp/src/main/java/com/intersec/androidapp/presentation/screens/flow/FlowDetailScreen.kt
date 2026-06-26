@@ -110,7 +110,7 @@ fun FlowDetailScreen(
 
                 Spacer(Modifier.height(24.dp))
 
-                // ===== STATUS DE SEGURANÇA DO FLUXO =====
+                // ===== SITUAÇÃO DE SEGURANÇA DO FLUXO =====
                 Text("Análise de Risco", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp))
                 

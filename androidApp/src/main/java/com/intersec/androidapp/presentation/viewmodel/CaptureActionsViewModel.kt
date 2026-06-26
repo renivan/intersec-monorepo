@@ -1,4 +1,4 @@
-package com.intersec.androidapp.presentation.viewmodel
+﻿package com.intersec.androidapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
  */
 class CaptureActionsViewModel : ViewModel() {
 
-    private val repository = AppBootstrap.rustAnalysisRepository
+    private val repository = AppBootstrap.coreAnalysisRepository
 
     private val _uiState = MutableStateFlow(CaptureActionUiState())
     val uiState: StateFlow<CaptureActionUiState> = _uiState.asStateFlow()
@@ -142,7 +142,7 @@ class CaptureActionsViewModel : ViewModel() {
                 )
             }
 
-            // TODO: Implementar exportação PCAP/JSON
+            // TODO: Implementar exportaÃ§Ã£o PCAP/JSON
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -153,17 +153,12 @@ class CaptureActionsViewModel : ViewModel() {
         }
     }
 
-    fun clearStatus() {
-        _uiState.update {
-            it.copy(statusMessage = null)
-        }
-    }
-
     fun updateFilter(newFilter: String) {
         _uiState.update {
             it.copy(captureFilter = newFilter)
         }
     }
 }
+
 
 

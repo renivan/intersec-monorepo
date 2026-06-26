@@ -1,19 +1,19 @@
-package com.intersec.androidapp.core.vpn
+﻿package com.intersec.androidapp.core.vpn
 
 import android.content.Intent
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import com.intersec.androidapp.core.bridge.RustBridgeClient
+import com.intersec.androidapp.core.bridge.NativeBridgeClient
 
 /**
  * InterSec Sentinel Tunnel: O "Porteiro" do tráfego.
- * Estabelece o túnel VPN e entrega o File Descriptor para o motor Rust.
+ * Estabelece o túnel VPN e entrega o File Descriptor para o motor Native.
  */
 class InterSecVpnService : VpnService() {
 
     private var vpnInterface: ParcelFileDescriptor? = null
-    private val bridgeClient = RustBridgeClient()
+    private val bridgeClient = NativeBridgeClient()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -33,7 +33,7 @@ class InterSecVpnService : VpnService() {
                 .addRoute("0.0.0.0", 0) 
                 .addDnsServer("8.8.8.8")
                 .setMtu(1500)
-                .addDisallowedApplication(packageName) // REGRA DE OURO: Evita loop infinito
+                .addDisallowedApplication(packageName) // Evita loop infinito
                 .setBlocking(false)
 
             vpnInterface = builder.establish()
@@ -45,9 +45,9 @@ class InterSecVpnService : VpnService() {
                 val success = bridgeClient.attachVpnTunnel(fd)
                 if (success) {
                     Log.d("InterSecVPN", "Análise em Tempo Real ATIVADA via VpnService.")
-                    updateNotification("InterSec: Monitoramento Ativo")
+                    updateNotification()
                 } else {
-                    Log.e("InterSecVPN", "Erro: O motor Rust recusou a conexão do túnel.")
+                    Log.e("InterSecVPN", "Erro: O motor Native recusou a conexão do túnel.")
                     stopVpn()
                 }
             }
@@ -57,7 +57,7 @@ class InterSecVpnService : VpnService() {
         }
     }
 
-    private fun updateNotification(text: String) {
+    private fun updateNotification() {
         // Futura implementação de notificação de serviço em primeiro plano
     }
 
@@ -72,3 +72,4 @@ class InterSecVpnService : VpnService() {
         super.onDestroy()
     }
 }
+

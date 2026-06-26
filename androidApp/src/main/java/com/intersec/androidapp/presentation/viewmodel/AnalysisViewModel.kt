@@ -1,25 +1,33 @@
-package com.intersec.androidapp.presentation.viewmodel
+﻿package com.intersec.androidapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.intersec.androidapp.app.MainApplication
+import com.intersec.androidapp.core.storage.SecuritySettingsManager
 import com.intersec.androidapp.di.AppBootstrap
-import com.intersec.androidapp.domain.repository.RustAnalysisRepository
+import com.intersec.androidapp.domain.repository.CoreAnalysisRepository
 import com.intersec.androidapp.presentation.state.AnalysisUiState
 import com.intersec.androidapp.presentation.state.ImportLogEntry
 import com.intersec.androidapp.presentation.state.LogLevel
+import com.intersec.androidapp.core.network.ThreatIntelManager
+import com.intersec.androidapp.ui.theme.AppThemeType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * ViewModel principal unificado com suporte a log detalhado de importação.
+ * ViewModel principal unificado com suporte a log detalhado de importação e configurações de segurança.
  */
 class AnalysisViewModel(
-    private val repository: RustAnalysisRepository = AppBootstrap.rustAnalysisRepository
+    private val repository: CoreAnalysisRepository = AppBootstrap.coreAnalysisRepository,
+    private val securitySettings: SecuritySettingsManager = MainApplication.appModule.securitySettingsManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AnalysisUiState())
@@ -28,16 +36,94 @@ class AnalysisViewModel(
 
     init {
         startPolling()
+        observeSecuritySettings()
+    }
+
+    private fun observeSecuritySettings() {
+        securitySettings.smartShieldActive.onEach { active ->
+            _uiState.update { it.copy(isShieldActive = active) }
+            syncSecurityWithNative()
+        }.launchIn(viewModelScope)
+
+        securitySettings.killSwitchActive.onEach { active ->
+            _uiState.update { it.copy(isKillSwitchOn = active) }
+            syncSecurityWithNative()
+        }.launchIn(viewModelScope)
+
+        securitySettings.securityLevel.onEach { level ->
+            _uiState.update { it.copy(securityLevel = level) }
+            syncSecurityWithNative()
+        }.launchIn(viewModelScope)
+
+        securitySettings.userTier.onEach { tier ->
+            _uiState.update { it.copy(userTier = tier) }
+            ThreatIntelManager.syncThreatFeeds(tier == 1)
+        }.launchIn(viewModelScope)
+
+        securitySettings.themeType.onEach { typeId ->
+            val theme = AppThemeType.entries.find { it.id == typeId } ?: AppThemeType.TACTICAL_MILITARY
+            _uiState.update { it.copy(themeType = theme) }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun syncSecurityWithNative() {
+        val state = _uiState.value
+        viewModelScope.launch {
+            repository.updateSecuritySettings(
+                level = state.securityLevel,
+                smartShield = state.isShieldActive,
+                killSwitch = state.isKillSwitchOn
+            ).onFailure { e ->
+                addLog("Aviso: Falha ao sincronizar configurações com o motor: ${e.message}", LogLevel.WARNING)
+            }
+        }
+    }
+
+    fun toggleSmartShield(active: Boolean) {
+        viewModelScope.launch {
+            securitySettings.setSmartShield(active)
+        }
+    }
+
+    fun toggleKillSwitch(active: Boolean) {
+        viewModelScope.launch {
+            securitySettings.setKillSwitch(active)
+        }
+    }
+
+    fun updateSecurityLevel(level: Int) {
+        viewModelScope.launch {
+            securitySettings.setSecurityLevel(level)
+        }
+    }
+
+    fun upgradeToPro() {
+        viewModelScope.launch {
+            securitySettings.setUserTier(1)
+        }
+    }
+
+    fun updateTheme(theme: AppThemeType) {
+        viewModelScope.launch {
+            securitySettings.setThemeType(theme.id)
+        }
     }
 
     private fun startPolling() {
         pollJob?.cancel()
         pollJob = viewModelScope.launch {
             while (true) {
-                if (_uiState.value.session != null) {
-                    refreshActiveSession()
+                delay(500.milliseconds)
+                val state = _uiState.value
+                // Só atualiza se houver uma sessão ativa e não estiver em processo de carga inicial
+                if ((state.session != null && !state.isLoading)) {
+                    while (true) {
+                        delay(500.milliseconds)
+                        // Re-checa se a sessão ainda existe antes de atualizar
+                        if (_uiState.value.session == null) break
+                        refreshActiveSession()
+                    }
                 }
-                delay(3000) // Poll a cada 3 segundos para o Dashboard
             }
         }
     }
@@ -53,10 +139,10 @@ class AnalysisViewModel(
             _uiState.update { it.copy(isLoading = true, error = null) }
             val now = System.currentTimeMillis() * 1000L
 
-            addLog("Chamando motor nativo Rust (JNI)...")
+            addLog("Chamando motor nativo (JNI)...")
             repository.openCapture(path, now).fold(
                 onSuccess = { snapshot ->
-                    addLog("Sucesso nativo! Sessão criada: ${snapshot.sessionId}", LogLevel.SUCCESS)
+                    addLog("sucesso nativo! Sessão criada: ${snapshot.sessionId}", LogLevel.SUCCESS)
                     addLog("Métricas iniciais: ${snapshot.totalPackets} pacotes, ${snapshot.totalFlows} fluxos.")
                     
                     val sessionDto = com.intersec.androidapp.data.model.dto.SessionDto(
@@ -132,3 +218,4 @@ class AnalysisViewModel(
     }
 
 }
+

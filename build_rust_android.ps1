@@ -3,7 +3,7 @@
 # Localização: Root do Projeto
 
 $SCRIPT_DIR = $PSScriptRoot
-$RUST_PROJECT_PATH = Join-Path $SCRIPT_DIR "rust-core"
+$RUST_PROJECT_PATH = Join-Path $SCRIPT_DIR "native-engine"
 $ANDROID_JNI_PATH = Join-Path $SCRIPT_DIR "androidApp\src\main\jniLibs"
 $LIB_NAME = "libwireshark_mobile_core.so"
 

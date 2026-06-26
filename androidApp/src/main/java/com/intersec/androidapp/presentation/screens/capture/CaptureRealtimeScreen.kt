@@ -1,4 +1,4 @@
-package com.intersec.androidapp.presentation.screens.capture
+﻿package com.intersec.androidapp.presentation.screens.capture
 
 import android.annotation.SuppressLint
 import android.net.VpnService
@@ -6,19 +6,66 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SettingsInputAntenna
+import androidx.compose.material.icons.filled.SettingsInputHdmi
+import androidx.compose.material.icons.filled.SignalCellularAlt
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -26,18 +73,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.intersec.androidapp.presentation.state.CaptureRealtimeUiState
-import com.intersec.androidapp.presentation.state.PacketColorPalette
-import com.intersec.androidapp.presentation.state.RealtimePacketModel
+import com.intersec.androidapp.presentation.screens.overview.formatVolume
+import com.intersec.androidapp.presentation.state.*
 import com.intersec.androidapp.presentation.viewmodel.CaptureRealtimeViewModel
+import java.util.Locale
 
 @Composable
 fun CaptureRealtimeScreen(
     viewModel: CaptureRealtimeViewModel = viewModel(),
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
     
     val vpnLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -66,7 +114,7 @@ fun CaptureRealtimeScreen(
         AlertDialog(
             onDismissRequest = { viewModel.clearError() },
             title = { Text("Acesso Negado (Root necessário)") },
-            text = { Text("Não foi possível iniciar a captura direta na interface ${state.networkInterface}. Deseja tentar o modo VPN Sentinel (Não-Root)?") },
+            text = { Text("Nâo foi possível iniciar a captura direta na interface ${state.networkInterface}. Deseja tentar o modo VPN segura (Não-Root)?") },
             confirmButton = {
                 Button(onClick = { 
                     val intent = VpnService.prepare(context)
@@ -77,12 +125,12 @@ fun CaptureRealtimeScreen(
                     }
                     viewModel.clearError()
                 }) {
-                    Text("USAR MODO VPN")
+                    Text("Usar MODO VPN")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.clearError() }) {
-                    Text("CANCELAR")
+                    Text("CANCELAR OPERAÇÃO")
                 }
             }
         )
@@ -96,11 +144,12 @@ fun CaptureRealtimeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(12.dp)
         ) {
             CaptureHeader(state, onBack)
             Spacer(Modifier.height(8.dp))
-            InterfaceNetworkCard(state)
+            InterfaceNetworkCard(state, viewModel)
             
             Spacer(Modifier.height(12.dp))
             NeuralConnectivityMap(state)
@@ -116,6 +165,18 @@ fun CaptureRealtimeScreen(
             Spacer(Modifier.height(12.dp))
             PacketsListSection(state)
         }
+    }
+
+    if (state.showSummaryModal) {
+        CaptureSummaryModal(
+            state = state,
+            onDiscard = { viewModel.discardCapture() },
+            onContinue = { viewModel.hideSummary() },
+            onAnalyze = { 
+                // Navegar para análise ou fechar modal dependendo do fluxo
+                viewModel.hideSummary() 
+            }
+        )
     }
 }
 
@@ -167,15 +228,19 @@ fun CaptureHeader(state: CaptureRealtimeUiState, onBack: () -> Unit) {
 }
 
 @Composable
-fun InterfaceNetworkCard(state: CaptureRealtimeUiState) {
+fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealtimeViewModel) {
     var showInterfaceDialog by remember { mutableStateOf(false) }
+    val isPro = state.userTier == 1
 
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { showInterfaceDialog = true },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = isPro) { showInterfaceDialog = true },
         colors = CardDefaults.cardColors(
             containerColor = PacketColorPalette.CARD_BACKGROUND
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, if (isPro) Color.Cyan.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f))
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -183,50 +248,94 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("INTERFACE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text(state.networkInterface, color = Color.Cyan, fontWeight = FontWeight.Bold)
+                Text(
+                    if (isPro) "INTERFACE ATIVA" else "CONEXÃO AUTOMÁTICA",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+                Text(state.networkInterface, color = if (isPro) Color.Cyan else Color.White.copy(alpha = 0.7f), fontWeight = FontWeight.ExtraBold)
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text("TIPO DE REDE", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text(state.networkName, color = Color.White, fontWeight = FontWeight.Bold)
+                Text("TIPO DE CONEXÃO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text(state.networkName.uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
-            Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = Color.White.copy(alpha = 0.3f))
+            if (isPro) {
+                Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = Color.Cyan)
+            } else {
+                Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
+            }
         }
     }
 
     if (showInterfaceDialog) {
         AlertDialog(
             onDismissRequest = { showInterfaceDialog = false },
-            title = { Text("Selecionar Interface de Monitoramento") },
+            title = { 
+                Text(
+                    "SELECIONAR INTERFACE DE MONITORAMENTO", 
+                    fontSize = 14.sp, 
+                    fontWeight = FontWeight.Black,
+                    fontFamily = FontFamily.Monospace
+                ) 
+            },
+            containerColor = PacketColorPalette.CARD_BACKGROUND,
             text = {
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                     items(state.availableInterfaces) { info ->
+                        val isSelected = state.networkInterface == info.interfaceName
                         ListItem(
-                            headlineContent = { Text(info.interfaceName, fontWeight = FontWeight.Bold) },
-                            supportingContent = { Text("${info.typeName} - ${info.details}") },
+                            headlineContent = { 
+                                Text(
+                                    info.interfaceName, 
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) Color.Cyan else Color.White
+                                ) 
+                            },
+                            supportingContent = { 
+                                Text(
+                                    "${info.typeName} - ${info.details}",
+                                    color = if (isSelected) Color.Cyan.copy(alpha = 0.7f) else Color.Gray
+                                ) 
+                            },
                             leadingContent = { 
                                 val icon = when(info.typeName) {
                                     "Wi-Fi" -> Icons.Default.Wifi
                                     "Ethernet" -> Icons.Default.SettingsInputHdmi
                                     else -> Icons.Default.SignalCellularAlt
                                 }
-                                Icon(icon, contentDescription = null)
+                                Icon(icon, contentDescription = null, tint = if (isSelected) Color.Cyan else Color.Gray)
                             },
                             trailingContent = {
-                                if (state.networkInterface == info.interfaceName) {
+                                if (isSelected) {
                                     Icon(Icons.Default.Check, contentDescription = null, tint = Color.Cyan)
                                 }
                             },
-                            modifier = Modifier.clickable { 
-                                // viewModel.onInterfaceSelected(info.interfaceName, info.typeName)
-                                showInterfaceDialog = false 
-                            }
+                            colors = ListItemDefaults.colors(
+                                containerColor = if (isSelected) Color.Cyan.copy(alpha = 0.1f) else Color.Transparent,
+                                headlineColor = if (isSelected) Color.Cyan else Color.White,
+                                leadingIconColor = if (isSelected) Color.Cyan else Color.Gray
+                            ),
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .border(
+                                    width = if (isSelected) 1.dp else 0.dp,
+                                    color = if (isSelected) Color.Cyan.copy(alpha = 0.5f) else Color.Transparent,
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .clickable { 
+                                    viewModel.onInterfaceSelected(info.interfaceName, info.typeName)
+                                    showInterfaceDialog = false 
+                                }
                         )
+                        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showInterfaceDialog = false }) { Text("FECHAR") }
+                TextButton(onClick = { showInterfaceDialog = false }) { 
+                    Text("FECHAR", color = Color.Cyan, fontWeight = FontWeight.Bold) 
+                }
             }
         )
     }
@@ -236,7 +345,7 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState) {
 fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("🛡️ Autorização do Túnel Sentinel") },
+        title = { Text("Autorização do Túnel Sentinel") },
         text = {
             Column {
                 Text(
@@ -245,9 +354,9 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "• Seus dados NÃO saem do dispositivo.\n" +
-                    "• O motor Rust processa tudo localmente.\n" +
-                    "• Isso permite detectar invasões e vazamentos.",
+                    "â€¢ Seus dados NÃO saem do dispositivo.\n" +
+                    "â€¢ O motor Native processa tudo localmente.\n" +
+                    "â€¢ Isso permite detectar invasões e vazamentos.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.7f)
                 )
@@ -264,7 +373,7 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
                 onClick = onAccept,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black)
             ) {
-                Text("ACEITAR E ATIVAR")
+                Text("ACEITAR E ATIVAR PROTEÇÃO")
             }
         },
         dismissButton = {
@@ -279,7 +388,7 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
 fun CaptureFilterSection(state: CaptureRealtimeUiState, viewModel: CaptureRealtimeViewModel) {
     Column {
         Text(
-            "🎯 Filtro BPF (Opcional)",
+            "ðŸŽ¯ Filtro BPF (Opcional)",
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
@@ -377,7 +486,7 @@ fun CaptureStatusSection(state: CaptureRealtimeUiState) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("DURAÇÃO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text("DURAÃ‡ÃƒO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
                 Text(
                     String.format("%02d:%02d:%02d", 
                         state.elapsedSeconds / 3600, 
@@ -395,11 +504,92 @@ fun CaptureStatusSection(state: CaptureRealtimeUiState) {
 }
 
 @Composable
+fun CaptureSummaryModal(
+    state: CaptureRealtimeUiState,
+    onDiscard: () -> Unit,
+    onContinue: () -> Unit,
+    onAnalyze: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onContinue,
+        containerColor = PacketColorPalette.CARD_BACKGROUND,
+        title = { 
+            Text(
+                "RESUMO DA OPERAÇÃO", 
+                color = Color.Cyan, 
+                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 16.sp
+            ) 
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SummaryRow("PACOTES CAPTURADOS", state.totalPackets.toString())
+                SummaryRow("DURAÇÃO DA MISSÃO", String.format(java.util.Locale.US, "%02d:%02d:%02d", 
+                    state.elapsedSeconds / 3600, 
+                    (state.elapsedSeconds % 3600) / 60, 
+                    state.elapsedSeconds % 60))
+                SummaryRow("VOLUME TOTAL", formatVolume(state.totalBytes))
+                
+                val avgSize = if (state.totalPackets > 0) state.totalBytes / state.totalPackets else 0L
+                SummaryRow("TAMANHO MÉDIO PKT", "$avgSize bytes")
+                
+                HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 8.dp))
+                
+                Text(
+                    "DESEJA DESCARTAR OS DADOS OU PROSSEGUIR COM A ANÁLISE DETALHADA?",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onAnalyze,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan, contentColor = Color.Black),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text("ANALISAR DADOS", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDiscard) {
+                    Text("DESCARTAR", color = Color.Red.copy(alpha = 0.7f))
+                }
+                TextButton(onClick = onContinue) {
+                    Text("MANTER PAUSADO", color = Color.White)
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun SummaryRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Monospace)
+        Text(value, style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+    }
+}
+
+@Composable
 fun PacketsListSection(state: CaptureRealtimeUiState) {
     var showFlows by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize()) {
-        TabRow(
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(280.dp) // Limita a altura para o "prompt pequeno"
+            .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+            .padding(8.dp)
+    ) {
+        PrimaryTabRow(
             selectedTabIndex = if (showFlows) 1 else 0,
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.primary
@@ -449,7 +639,7 @@ fun FlowsList(state: CaptureRealtimeUiState) {
 }
 
 @Composable
-fun FlowRow(flow: com.intersec.androidapp.presentation.state.RealtimeFlowModel) {
+fun FlowRow(flow: RealtimeFlowModel) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = PacketColorPalette.CARD_BACKGROUND),
@@ -490,7 +680,11 @@ fun PacketRow(packet: RealtimePacketModel) {
         Column(Modifier.padding(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text("#${packet.number}", style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
-                Text("${String.format("%.3f", packet.timestampSeconds)}s", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text(
+                    "${String.format(Locale.US, "%.3f", packet.timestampSeconds)}s",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.5f)
+                )
                 Text(packet.protocol, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(4.dp))
@@ -498,3 +692,4 @@ fun PacketRow(packet: RealtimePacketModel) {
         }
     }
 }
+

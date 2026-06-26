@@ -70,9 +70,19 @@ fun NeuralConnectivityMap(state: CaptureRealtimeUiState) {
                 
                 drawCircle(
                     color = Color.Cyan,
-                    radius = 8f,
+                    radius = 10f,
                     center = center
                 )
+
+                if (state.neuralNodes.isEmpty() && state.isCapturing) {
+                    // Efeito de Varredura Circular (Scanning)
+                    drawCircle(
+                        color = Color.Cyan.copy(alpha = 0.1f),
+                        radius = (size.minDimension / 2) * pulseScale,
+                        center = center,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f)
+                    )
+                }
 
                 // Desenha os Nós Periféricos (Tráfego Real)
                 state.neuralNodes.forEach { node ->

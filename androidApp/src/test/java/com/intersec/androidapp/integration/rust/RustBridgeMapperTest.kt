@@ -1,13 +1,13 @@
-package com.intersec.androidapp.integration.rust
+﻿package com.intersec.androidapp.integration.rust
 
-import com.intersec.androidapp.core.bridge.RustBridgeMapper
+import com.intersec.androidapp.core.bridge.NativeBridgeMapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class RustBridgeMapperTest {
+class NativeBridgeMapperTest {
 
-    private val mapper = RustBridgeMapper()
+    private val mapper = NativeBridgeMapper()
 
     @Test
     fun `toSessionSnapshot should parse key-value lines correctly`() {
@@ -27,8 +27,8 @@ class RustBridgeMapperTest {
         assertEquals("capture.pcap", data.sourceName)
         assertEquals(100L, data.packetCount)
         assertEquals(10L, data.flowCount)
-        // O motor Rust retorna created_at_epoch_micros para sessões abertas
-        // O Mapper atual ainda não popula o campo duration para texto puro key-value
+        // O motor Native retorna created_at_epoch_micros para sessÃµes abertas
+        // O Mapper atual ainda nÃ£o popula o campo duration para texto puro key-value
         assertEquals(0L, data.duration)
     }
 
@@ -74,3 +74,4 @@ class RustBridgeMapperTest {
         assertEquals(1024L, data.items[0].payloadBytes)
     }
 }
+

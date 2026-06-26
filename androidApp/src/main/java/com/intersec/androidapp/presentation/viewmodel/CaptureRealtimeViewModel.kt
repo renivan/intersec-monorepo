@@ -1,9 +1,9 @@
-package com.intersec.androidapp.presentation.viewmodel
+﻿package com.intersec.androidapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.intersec.androidapp.di.AppBootstrap
-import com.intersec.androidapp.domain.repository.RustAnalysisRepository
+import com.intersec.androidapp.domain.repository.CoreAnalysisRepository
 import com.intersec.androidapp.core.network.NetworkInspector
 import com.intersec.androidapp.app.MainApplication
 import com.intersec.androidapp.presentation.state.*
@@ -16,14 +16,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * ViewModel REAL para gerenciar captura de pacotes via Motor Rust.
+ * ViewModel REAL para gerenciar captura de pacotes via Motor Native.
  * Agora com suporte a VPN e Análise de Fluxo.
  */
 class CaptureRealtimeViewModel(
-    private val repository: RustAnalysisRepository = AppBootstrap.rustAnalysisRepository
+    private val repository: CoreAnalysisRepository = AppBootstrap.coreAnalysisRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CaptureRealtimeUiState())
@@ -32,10 +33,23 @@ class CaptureRealtimeViewModel(
     private var captureJob: Job? = null
     private var flowJob: Job? = null
     private var timerJob: Job? = null
+    private var overviewJob: Job? = null
+    private var purgeJob: Job? = null
     private var sessionId: String? = null
 
     init {
         detectNetwork()
+        syncWithNative()
+    }
+
+    private fun syncWithNative() {
+        viewModelScope.launch {
+            repository.snapshotActive().onSuccess { snapshot ->
+                if (snapshot.sessionId.isNotEmpty() && !snapshot.sessionId.contains("null")) {
+                    onCaptureStarted(snapshot.sessionId, snapshot.sourceName, "Restored Session")
+                }
+            }
+        }
     }
 
     private fun detectNetwork() {
@@ -48,10 +62,6 @@ class CaptureRealtimeViewModel(
                 availableInterfaces = allInterfaces
             )
         }
-    }
-
-    fun onInterfaceSelected(name: String, type: String) {
-        _uiState.update { it.copy(networkInterface = name, networkName = type) }
     }
 
     fun requestVpnAuthorization() {
@@ -113,6 +123,38 @@ class CaptureRealtimeViewModel(
         startTimer()
         pollPackets()
         pollFlows()
+        pollOverview()
+        setupMaintenanceJobs()
+    }
+
+    private fun setupMaintenanceJobs() {
+        val tierFlow = MainApplication.appModule.securitySettingsManager.userTier
+        viewModelScope.launch {
+            tierFlow.collect { tier ->
+                _uiState.update { it.copy(userTier = tier) }
+                if (tier == 0) { // FREE Tier
+                    startAutoPurgeTask()
+                } else {
+                    purgeJob?.cancel()
+                }
+            }
+        }
+    }
+
+    private fun startAutoPurgeTask() {
+        purgeJob?.cancel()
+        purgeJob = viewModelScope.launch {
+            while (isActive) {
+                delay(10.minutes)
+                if (_uiState.value.isCapturing) {
+                    // Limpeza de cache no motor a cada 10 min para usuários FREE
+                    sessionId?.let { id ->
+                        repository.stopCapture(id)
+                        repository.startCapture(_uiState.value.networkInterface, _uiState.value.filterInput)
+                    }
+                }
+            }
+        }
     }
 
     fun updateFilterInput(newFilter: String) {
@@ -136,24 +178,33 @@ class CaptureRealtimeViewModel(
                 repository.capturePackets(currentSessionId, limit = 50).fold(
                     onSuccess = { newPackets ->
                         if (newPackets.isNotEmpty()) {
-                            val mappedPackets = newPackets.map { rustItem ->
+                            val mappedPackets = newPackets.map { nativeItem ->
                                 RealtimePacketModel(
-                                    number = rustItem.packetNumber.toInt(),
-                                    timestampSeconds = (rustItem.timestampEpochMicros ?: 0L).toDouble() / 1_000_000.0,
+                                    number = nativeItem.packetNumber.toInt(),
+                                    timestampSeconds = (nativeItem.timestampEpochMicros ?: 0L).toDouble() / 1_000_000.0,
                                     sourceAddress = "...", 
                                     destinationAddress = "...",
-                                    protocol = rustItem.highestProtocol ?: "UNK",
+                                    protocol = nativeItem.highestProtocol ?: "UNK",
                                     flags = null,
                                     size = 0,
-                                    info = rustItem.info,
-                                    colorType = mapProtocolToColor(rustItem.highestProtocol, rustItem.info)
+                                    info = nativeItem.info,
+                                    colorType = mapProtocolToColor(nativeItem.highestProtocol, nativeItem.info)
                                 )
                             }
                             
                             _uiState.update { state ->
                                 val updatedList = (state.packets + mappedPackets).takeLast(100)
+                                
+                                // Regra FREE: Expira cache local após 5 minutos
+                                val currentTime = System.currentTimeMillis()
+                                val finalPackets = if (state.userTier == 0 && (currentTime - state.captureStartTime > 5 * 60 * 1000)) {
+                                    updatedList.takeLast(10) // Mantém apenas o rastro mínimo
+                                } else {
+                                    updatedList
+                                }
+
                                 state.copy(
-                                    packets = updatedList,
+                                    packets = finalPackets,
                                     totalPackets = state.totalPackets + mappedPackets.size
                                 )
                             }
@@ -175,10 +226,12 @@ class CaptureRealtimeViewModel(
                 repository.captureFlows(currentSessionId, limit = 20).fold(
                     onSuccess = { newFlows ->
                         _uiState.update { state ->
+                            val updatedFlows = newFlows.map { 
+                                RealtimeFlowModel(it.label, it.endpoints, it.totalPackets, it.totalPayloadBytes, it.isInsecure)
+                            }
                             state.copy(
-                                flows = newFlows.map { 
-                                    RealtimeFlowModel(it.label, it.endpoints, it.totalPackets, it.totalPayloadBytes, it.isInsecure)
-                                }
+                                flows = updatedFlows,
+                                neuralNodes = generateNeuralNodes(updatedFlows)
                             )
                         }
                     },
@@ -205,12 +258,42 @@ class CaptureRealtimeViewModel(
         }
     }
 
+    private fun pollOverview() {
+        overviewJob?.cancel()
+        overviewJob = viewModelScope.launch {
+            while (isActive && _uiState.value.isCapturing) {
+                repository.getOverview().onSuccess { overview ->
+                    _uiState.update { it.copy(totalBytes = overview.totalVolumeBytes) }
+                }
+                delay(2000.milliseconds)
+            }
+        }
+    }
+
+    private fun generateNeuralNodes(flows: List<RealtimeFlowModel>): List<NeuralNodeModel> {
+        return flows.take(8).mapIndexed { index, flow ->
+            val angle = (index * (360f / 8f)) * (Math.PI / 180f).toFloat()
+            val radius = 0.35f
+            NeuralNodeModel(
+                id = flow.label,
+                x = 0.5f + radius * kotlin.math.cos(angle),
+                y = 0.5f + radius * kotlin.math.sin(angle),
+                intensity = (flow.packetCount.toFloat() / 100f).coerceIn(0.2f, 1.0f),
+                connections = listOf("core")
+            )
+        }
+    }
+
+    fun onInterfaceSelected(name: String, type: String) {
+        _uiState.update { it.copy(networkInterface = name, networkName = type) }
+    }
+
     fun pauseCapture() {
-        _uiState.update { it.copy(isPaused = true, statusIndicator = StatusIndicator.PAUSED) }
+        _uiState.update { it.copy(isPaused = true, statusIndicator = StatusIndicator.PAUSED, showSummaryModal = true) }
     }
 
     fun resumeCapture() {
-        _uiState.update { it.copy(isPaused = false, statusIndicator = StatusIndicator.ACTIVE) }
+        _uiState.update { it.copy(isPaused = false, statusIndicator = StatusIndicator.ACTIVE, showSummaryModal = false) }
     }
 
     fun stopCapture() {
@@ -222,13 +305,31 @@ class CaptureRealtimeViewModel(
                 it.copy(
                     isCapturing = false,
                     isPaused = false,
-                    statusIndicator = StatusIndicator.IDLE
+                    statusIndicator = StatusIndicator.IDLE,
+                    showSummaryModal = true
                 )
             }
             captureJob?.cancel()
             flowJob?.cancel()
             timerJob?.cancel()
+            overviewJob?.cancel()
         }
+    }
+
+    fun discardCapture() {
+        viewModelScope.launch {
+            sessionId?.let { repository.stopCapture(it) }
+            sessionId = null
+            _uiState.value = CaptureRealtimeUiState()
+            captureJob?.cancel()
+            flowJob?.cancel()
+            timerJob?.cancel()
+            overviewJob?.cancel()
+        }
+    }
+
+    fun hideSummary() {
+        _uiState.update { it.copy(showSummaryModal = false) }
     }
 
     private fun startTimer() {
@@ -241,3 +342,4 @@ class CaptureRealtimeViewModel(
         }
     }
 }
+

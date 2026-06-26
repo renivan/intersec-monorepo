@@ -1,6 +1,0 @@
-Substituir os arquivos do seu workspace pelos arquivos deste patch.
-Depois rodar:
-
-cargo clean
-cargo test -p protocol-engine
-cargo check

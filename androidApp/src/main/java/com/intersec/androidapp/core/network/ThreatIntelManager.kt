@@ -1,8 +1,8 @@
-package com.intersec.androidapp.core.network
+﻿package com.intersec.androidapp.core.network
 
 import android.util.Log
 import com.google.firebase.storage.FirebaseStorage
-import com.intersec.androidapp.core.bridge.RustBridgeClient
+import com.intersec.androidapp.core.bridge.NativeBridgeClient
 import java.io.File
 
 /**
@@ -12,10 +12,10 @@ import java.io.File
 object ThreatIntelManager {
     private const val TAG = "interSec_INTEL"
     private val storage = FirebaseStorage.getInstance()
-    private val bridge = RustBridgeClient()
+    private val bridge = NativeBridgeClient()
 
     /**
-     * Sincroniza a "Blacklist de Elite" do Firebase para o motor Rust.
+     * Sincroniza a "Blacklist de Elite" do Firebase para o motor Native.
      * @param isPro Se true, baixa a base completa em tempo real. Se false, base padrão.
      */
     fun syncThreatFeeds(isPro: Boolean = false) {
@@ -29,10 +29,10 @@ object ThreatIntelManager {
                 val bytes = localFile.readBytes()
                 Log.i(TAG, "Sucesso: ${bytes.size} bytes de inteligência baixados.")
                 
-                // Entrega a blindagem diretamente para o motor nativo Rust
+                // Entrega a blindagem diretamente para o motor nativo Native
                 val success = bridge.updateThreatDatabase(bytes)
                 if (success) {
-                    Log.i(TAG, "Motor Rust: Blindagem Industrial ATUALIZADA.")
+                    Log.i(TAG, "Motor Native: Blindagem Industrial ATUALIZADA.")
                 }
             }
             .addOnFailureListener {
@@ -40,3 +40,4 @@ object ThreatIntelManager {
             }
     }
 }
+

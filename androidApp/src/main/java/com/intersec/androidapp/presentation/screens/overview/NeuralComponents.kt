@@ -1,11 +1,21 @@
 package com.intersec.androidapp.presentation.screens.overview
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,20 +24,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.intersec.androidapp.presentation.state.PacketColorPalette
+import androidx.compose.ui.unit.sp
 import java.util.Locale
 
 @Composable
 fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(PacketColorPalette.CARD_BACKGROUND.copy(alpha = 0.5f))
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
     ) {
-        val primaryColor = Color.Cyan
+        val primaryColor = MaterialTheme.colorScheme.primary
         val secondaryColor = Color.White
         
         Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -79,7 +89,9 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
             modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = Color.White.copy(alpha = 0.4f)
+            color = primaryColor,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 8.sp
         )
     }
 }
@@ -88,13 +100,15 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
 fun OverviewMiniCard(modifier: Modifier, label: String, value: String, icon: ImageVector, color: Color) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(4.dp),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.1f))
     ) {
         Column(Modifier.padding(12.dp)) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(8.dp))
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, color = Color.White)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontFamily = FontFamily.Monospace)
         }
     }
 }

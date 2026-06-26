@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.intersec.androidapp.di.AppBootstrap
 import com.intersec.androidapp.presentation.screens.capture.CaptureRealtimeScreen
 import com.intersec.androidapp.presentation.screens.capture.MissionControlScreen
 import com.intersec.androidapp.presentation.screens.capture.ImportLogScreen
@@ -37,18 +38,21 @@ fun AppNavGraph(
                 onOpenOverview = { navController.navigate(AppRoutes.OVERVIEW) },
                 onOpenSecurity = { navController.navigate(AppRoutes.SECURITY_REPORT) },
                 onOpenImportLog = { navController.navigate(AppRoutes.IMPORT_LOG) },
-                onOpenCaptureRealtime = { navController.navigate(AppRoutes.CAPTURE_REALTIME) }
+                onOpenCaptureRealtime = { navController.navigate(AppRoutes.CAPTURE_REALTIME) },
+                onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) }
             )
         }
 
         composable(AppRoutes.CAPTURE_REALTIME) {
             CaptureRealtimeScreen(
+                viewModel = AppBootstrap.captureViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(AppRoutes.OVERVIEW) {
             CaptureOverviewScreen(
+                viewModel = analysisViewModel,
                 onBack = { navController.popBackStack() },
                 onOpenPackets = { navController.navigate(AppRoutes.PACKETS) },
                 onOpenFlows = { navController.navigate(AppRoutes.FLOWS) },
@@ -107,12 +111,18 @@ fun AppNavGraph(
             HistoryScreen(onBack = { navController.popBackStack() })
         }
 
-        composable(AppRoutes.SECURITY_REPORT) {
-            SecurityReportScreen(onBack = { navController.popBackStack() })
+        composable(AppRoutes.SETTINGS) {
+            SettingsScreen(
+                viewModel = analysisViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
-        composable(AppRoutes.SETTINGS) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+        composable(AppRoutes.SECURITY_REPORT) {
+            SecurityReportScreen(
+                viewModel = analysisViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(AppRoutes.IMPORT_LOG) {

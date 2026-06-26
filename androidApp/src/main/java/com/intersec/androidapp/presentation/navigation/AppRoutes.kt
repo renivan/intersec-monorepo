@@ -17,4 +17,6 @@ object AppRoutes {
     const val SETTINGS = "settings"
     const val SECURITY_REPORT = "security_report"
     const val IMPORT_LOG = "import_log"
+    const val LOGIN = "login"
+    const val REGISTER = "register"
 }

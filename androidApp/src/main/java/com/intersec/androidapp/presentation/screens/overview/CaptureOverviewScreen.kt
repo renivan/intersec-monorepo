@@ -1,14 +1,58 @@
 package com.intersec.androidapp.presentation.screens.overview
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,9 +60,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.intersec.androidapp.data.model.dto.*
-import com.intersec.androidapp.presentation.state.PacketColorPalette
+import com.intersec.androidapp.data.model.dto.CommunicationDto
+import com.intersec.androidapp.data.model.dto.ProtocolStatDto
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 
 /**
@@ -33,7 +78,7 @@ fun CaptureOverviewScreen(
     onOpenPackets: () -> Unit = {},
     onOpenFlows: () -> Unit = {},
     onOpenSecurity: () -> Unit = {},
-    onOpenGeoMap: () -> Unit = {}
+    onOpenGeoMap: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -43,21 +88,29 @@ fun CaptureOverviewScreen(
     }
 
     Scaffold(
-        containerColor = PacketColorPalette.BACKGROUND_DARK,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Network Neural Intelligence", color = Color.White, fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = PacketColorPalette.BACKGROUND_DARK
+                title = { 
+                    Text(
+                        "TACTICAL HUD: NEURAL LINK", 
+                        color = MaterialTheme.colorScheme.primary, 
+                        fontWeight = FontWeight.Black,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontFamily = FontFamily.Monospace
+                    ) 
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.refreshActiveSession() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Atualizar", tint = Color.White)
+                        Icon(Icons.Default.Refresh, contentDescription = "Atualizar", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             )
@@ -67,33 +120,36 @@ fun CaptureOverviewScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(PacketColorPalette.BACKGROUND_DARK)
+                .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
-            // ===== NEURAL MAP VISUAL (DETALHAMENTO DINÂMICO) =====
-            SectionHeader("Neural Connectivity Map")
+            // ===== SCANNER DE REDE (Estilo RADAR) =====
+            SectionHeader("ACTIVE SCANNER: NEURAL MAP")
             NeuralMapVisual(
-                modifier = Modifier.height(220.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .height(220.dp)
+                    .fillMaxWidth()
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
                 nodeCount = (state.overview?.protocolStats?.size ?: 4).coerceIn(4, 12)
             )
             
             Spacer(Modifier.height(24.dp))
 
             // ===== MÉTRICAS OPERACIONAIS GLOBAIS =====
-            SectionHeader("Métricas de Operação")
+            SectionHeader("MISSION PARAMETERS")
             state.overview?.let { overview ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OverviewMiniCard(
                         modifier = Modifier.weight(1f),
-                        label = "Pacotes Totais",
+                        label = "PACKETS",
                         value = state.session?.packetCount?.toString() ?: "0",
                         icon = Icons.Default.Inventory2,
-                        color = Color.Cyan
+                        color = MaterialTheme.colorScheme.primary
                     )
                     OverviewMiniCard(
                         modifier = Modifier.weight(1f),
-                        label = "Fluxos Ativos",
+                        label = "ACTIVE FLOWS",
                         value = state.session?.flowCount?.toString() ?: "0",
                         icon = Icons.Default.Route,
                         color = Color.White
@@ -103,17 +159,17 @@ fun CaptureOverviewScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OverviewMiniCard(
                         modifier = Modifier.weight(1f),
-                        label = "Volume de Dados",
+                        label = "DATA VOLUME",
                         value = formatVolume(overview.totalVolumeBytes),
                         icon = Icons.Default.BarChart,
-                        color = Color.Cyan
+                        color = MaterialTheme.colorScheme.primary
                     )
                     OverviewMiniCard(
                         modifier = Modifier.weight(1f),
-                        label = "Índice de Risco",
+                        label = "THREAT LEVEL",
                         value = "${overview.averageRiskScore}%",
                         icon = Icons.Default.Security,
-                        color = getRiskColor(overview.averageRiskScore)
+                        color = if (overview.averageRiskScore > 70) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
                     )
                 }
             }
@@ -121,9 +177,9 @@ fun CaptureOverviewScreen(
             Spacer(Modifier.height(24.dp))
 
             // ===== TOP COMUNICAÇÕES (DETALHAMENTO DE PACOTES/IP) =====
-            SectionHeader("Top Talkers (Comunicações Críticas)")
+            SectionHeader("TOP TALKERS: CRITICAL PATHS")
             if (state.overview?.topCommunications?.isEmpty() == true) {
-                Text("Aguardando detecção de fluxos...", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.5f))
+                Text("SCANNING FOR FLOWS...", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), fontFamily = FontFamily.Monospace)
             } else {
                 state.overview?.topCommunications?.forEach { comm ->
                     CommunicationItem(comm)
@@ -134,8 +190,8 @@ fun CaptureOverviewScreen(
 
             // ===== PROTOCOLOS & SEGURANÇA =====
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                SectionHeader("Protocolos")
-                Text("Segurança", style = MaterialTheme.typography.labelSmall, color = Color.Cyan)
+                SectionHeader("PROTOCOLS")
+                Text("SECURITY LAYER", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontFamily = FontFamily.Monospace)
             }
             
             state.overview?.let { overview ->
@@ -145,7 +201,7 @@ fun CaptureOverviewScreen(
             Spacer(Modifier.height(24.dp))
 
             // ===== EVENTOS DE INTELIGÊNCIA =====
-            SectionHeader("Eventos de Inteligência")
+            SectionHeader("INTELLIGENCE LOG")
             state.overview?.events?.forEach { event ->
                 IntelligenceEventRow(event)
             }
@@ -154,25 +210,27 @@ fun CaptureOverviewScreen(
 
             // ===== AÇÕES TÁTICAS =====
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
+                OutlinedButton(
                     onClick = onOpenFlows, 
                     modifier = Modifier.weight(1f), 
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
+                    shape = RoundedCornerShape(4.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Icon(Icons.Default.SwapHoriz, contentDescription = null, tint = Color.Cyan)
+                    Icon(Icons.Default.SwapHoriz, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Fluxos", color = Color.White)
+                    Text("FLOWS", fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                 }
-                FilledTonalButton(
+                OutlinedButton(
                     onClick = onOpenPackets, 
                     modifier = Modifier.weight(1f), 
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
+                    shape = RoundedCornerShape(4.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Icon(Icons.Default.List, contentDescription = null, tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Pacotes", color = Color.White)
+                    Text("PACKETS", fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                 }
             }
             
@@ -181,12 +239,12 @@ fun CaptureOverviewScreen(
             Button(
                 onClick = onOpenGeoMap,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155)),
-                shape = RoundedCornerShape(12.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                shape = RoundedCornerShape(4.dp)
             ) {
-                Icon(Icons.Default.Public, contentDescription = null, tint = Color.Cyan)
+                Icon(Icons.Default.Public, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(8.dp))
-                Text("Visualizar Mapa Geográfico", color = Color.White)
+                Text("GEO-MAP RADAR", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             }
             
             Spacer(Modifier.height(8.dp))
@@ -194,12 +252,13 @@ fun CaptureOverviewScreen(
             Button(
                 onClick = onOpenSecurity,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.2f), contentColor = Color.Red),
-                shape = RoundedCornerShape(12.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f), contentColor = MaterialTheme.colorScheme.error),
+                shape = RoundedCornerShape(4.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
             ) {
                 Icon(Icons.Default.Shield, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Painel de Defesa Ativa")
+                Text("ACTIVE DEFENSE CONSOLE", fontWeight = FontWeight.ExtraBold, fontFamily = FontFamily.Monospace)
             }
 
             Spacer(Modifier.height(40.dp))
@@ -209,34 +268,39 @@ fun CaptureOverviewScreen(
 
 @Composable
 fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        color = Color.White,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 12.dp)
-    )
+    Column(modifier = Modifier.padding(bottom = 12.dp)) {
+        Text(
+            text = title,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Black,
+            fontFamily = FontFamily.Monospace
+        )
+        HorizontalDivider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), thickness = 1.dp)
+    }
 }
 
 @Composable
 fun CommunicationItem(comm: CommunicationDto) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = PacketColorPalette.CARD_BACKGROUND)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(4.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.Cyan.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Cyan)
+            Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("${comm.source} ↔ ${comm.destination}", color = Color.White, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
+                Text("${comm.source} -> ${comm.destination}", color = Color.White, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
                 Row {
-                    Text("${comm.packetCount} pacotes", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                    Text("PKTS: ${comm.packetCount}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f), fontFamily = FontFamily.Monospace)
                     Spacer(Modifier.width(8.dp))
-                    Text("•", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                    Text("|", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                     Spacer(Modifier.width(8.dp))
-                    Text(formatVolume(comm.volumeBytes), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                    Text("VOL: ${formatVolume(comm.volumeBytes)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f), fontFamily = FontFamily.Monospace)
                 }
             }
         }
@@ -255,20 +319,22 @@ fun ProtocolFlowGrid(protocols: List<ProtocolStatDto>) {
             FilterChip(
                 selected = proto.isPredominant,
                 onClick = {},
-                label = { Text(proto.name, color = Color.White) },
+                label = { Text(proto.name, color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 10.sp) },
                 leadingIcon = {
-                    if (proto.isSecure) Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Cyan)
-                    else Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White.copy(alpha = 0.5f))
+                    if (proto.isSecure) Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.primary)
+                    else Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.Gray)
                 },
+                shape = RoundedCornerShape(2.dp),
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color.Cyan.copy(alpha = 0.2f),
-                    containerColor = PacketColorPalette.CARD_BACKGROUND,
+                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    containerColor = MaterialTheme.colorScheme.surface,
                     labelColor = Color.White
                 ),
                 border = FilterChipDefaults.filterChipBorder(
-                    borderColor = Color.White.copy(alpha = 0.1f),
+                    borderColor = if (proto.isPredominant) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.3f),
                     enabled = true,
-                    selected = proto.isPredominant
+                    selected = proto.isPredominant,
+                    borderWidth = 1.dp
                 )
             )
         }
@@ -280,8 +346,8 @@ fun IntelligenceEventRow(event: String) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Cyan)
-        Spacer(Modifier.width(12.dp))
-        Text(event, color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
+        Text(">", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+        Spacer(Modifier.width(8.dp))
+        Text(event.uppercase(), color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
     }
 }

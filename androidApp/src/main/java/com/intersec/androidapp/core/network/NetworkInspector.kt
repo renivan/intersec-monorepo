@@ -1,5 +1,6 @@
 package com.intersec.androidapp.core.network
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -10,7 +11,7 @@ data class NetworkInfo(
     val interfaceName: String,
     val typeName: String, // WiFi, 4G, 5G, Ethernet
     val isConnected: Boolean,
-    val details: String // SSID or Carrier name
+    val details: String, // SSID or Carrier name
 )
 
 object NetworkInspector {
@@ -26,7 +27,7 @@ object NetworkInspector {
                         details = if (ni.displayName != ni.name) ni.displayName else "Interface Interna"
                     )
                 }.toList()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
@@ -50,16 +51,16 @@ object NetworkInspector {
         var details = "Aguardando Rede"
         val isConnected = capabilities != null
 
-        if (capabilities != null) {
-            if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+        capabilities?.let { cap ->
+            if (cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                 typeName = "Wi-Fi"
-                details = "Wireless Sentinel Link"
+                details = "Wireless Link"
                 interfaceName = findInterfaceByPattern(listOf("wlan", "ap", "tiwlan"))
-            } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+            } else if (cap.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
                 typeName = getCellularGeneration(context)
                 details = "Rede de Dados Móvel"
                 interfaceName = findInterfaceByPattern(listOf("rmnet", "pdp", "ppp"))
-            } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+            } else if (cap.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
                 typeName = "Ethernet"
                 details = "Cabo de Rede (Emulador)"
                 interfaceName = findInterfaceByPattern(listOf("eth", "enp"))
@@ -71,10 +72,10 @@ object NetworkInspector {
 
     private fun findInterfaceByPattern(patterns: List<String>): String {
         return try {
-            NetworkInterface.getNetworkInterfaces().asSequence().find { ni ->
+            (NetworkInterface.getNetworkInterfaces().asSequence().find { ni ->
                 patterns.any { ni.name.contains(it, ignoreCase = true) }
-            }?.name ?: patterns.first() + "0"
-        } catch (e: Exception) {
+            }?.name) ?: (patterns.first() + "0")
+        } catch (_: Exception) {
             patterns.first() + "0"
         }
     }
@@ -82,10 +83,11 @@ object NetworkInspector {
     private fun getCellularGeneration(context: Context): String {
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         return try {
+            @SuppressLint("MissingPermission")
             @Suppress("DEPRECATION")
             val networkType = try {
                 telephonyManager.networkType
-            } catch (se: SecurityException) {
+            } catch (_: SecurityException) {
                 TelephonyManager.NETWORK_TYPE_UNKNOWN
             }
 

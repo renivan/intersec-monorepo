@@ -26,7 +26,10 @@ data class CaptureRealtimeUiState(
     val errorMessage: String? = null,
     val errorDetail: String? = null,
     val statusIndicator: StatusIndicator = StatusIndicator.IDLE,
-    val neuralNodes: List<NeuralNodeModel> = emptyList()
+    val neuralNodes: List<NeuralNodeModel> = emptyList(),
+    val totalBytes: Long = 0L,
+    val showSummaryModal: Boolean = false,
+    val userTier: Int = 0 // 0=FREE, 1=PRO
 )
 
 data class NeuralNodeModel(
@@ -83,8 +86,8 @@ object PacketColorPalette {
     val ANOMALY = Color(0xFFF97316)      // #F97316 (laranja)
     val NORMAL = Color(0xFF64748B)       // Cinza padrão
 
-    val BACKGROUND_DARK = Color(0xFF0F172A)  // #0F172A (dark)
-    val CARD_BACKGROUND = Color(0xFF1E293B)  // #1E293B (cards)
+    val BACKGROUND_DARK = Color(0xFF0D1117)  // StealthGray
+    val CARD_BACKGROUND = Color(0xFF161B22)  // RadarGray
 
     fun getColorForType(type: PacketColorType): Color = when (type) {
         PacketColorType.TCP_SYN -> TCP_SYN

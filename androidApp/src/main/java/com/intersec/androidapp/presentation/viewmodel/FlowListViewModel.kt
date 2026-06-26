@@ -1,9 +1,9 @@
-package com.intersec.androidapp.presentation.viewmodel
+﻿package com.intersec.androidapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.intersec.androidapp.di.AppBootstrap
-import com.intersec.androidapp.core.bridge.RustFlowQuery
+import com.intersec.androidapp.core.bridge.NativeFlowQuery
 import com.intersec.androidapp.presentation.state.FlowUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,13 +12,13 @@ import kotlinx.coroutines.launch
 
 class FlowListViewModel : ViewModel() {
 
-    private val repository = AppBootstrap.rustAnalysisRepository
-    private val pageSize = 100 // Mais eficiente com paginação no Rust
+    private val repository = AppBootstrap.coreAnalysisRepository
+    private val pageSize = 100 // Mais eficiente com paginação no Native
 
     private val _uiState = MutableStateFlow(FlowUiState())
     val uiState: StateFlow<FlowUiState> = _uiState.asStateFlow()
 
-    private var currentQuery = RustFlowQuery()
+    private var currentQuery = NativeFlowQuery()
 
     init {
         loadFlows()
@@ -30,7 +30,7 @@ class FlowListViewModel : ViewModel() {
         port: Int? = null,
         text: String? = null,
     ) {
-        currentQuery = RustFlowQuery(
+        currentQuery = NativeFlowQuery(
             protocol = protocol,
             host = host,
             port = port,
@@ -55,7 +55,7 @@ class FlowListViewModel : ViewModel() {
                 errorMessage = null,
             )
 
-            // FASE 2: Paginação delegada ao Rust
+            // FASE 2: Paginação delegada ao Native
             repository.queryFlows(currentQuery).fold(
                 onSuccess = { searchResult ->
                     val updatedItems = if (isNewSearch) {
@@ -81,3 +81,4 @@ class FlowListViewModel : ViewModel() {
         }
     }
 }
+

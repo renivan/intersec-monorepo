@@ -1,7 +1,7 @@
-package com.intersec.androidapp.presentation.state
+﻿package com.intersec.androidapp.presentation.state
 
-import com.intersec.androidapp.core.bridge.RustSessionSnapshot
-import com.intersec.androidapp.core.bridge.RustPacketItem
+import com.intersec.androidapp.core.bridge.NativeSessionSnapshot
+import com.intersec.androidapp.core.bridge.NativePacketItem
 
 /**
  * Estado da UI para ações de captura em tempo real
@@ -15,8 +15,8 @@ data class CaptureActionUiState(
     val actionStatus: ActionStatus = ActionStatus.IDLE,
     val currentAction: ActionType? = null,
     val statusMessage: String? = null,
-    val lastSnapshot: RustSessionSnapshot? = null,
-    val currentPackets: List<RustPacketItem> = emptyList(),
+    val lastSnapshot: NativeSessionSnapshot? = null,
+    val currentPackets: List<NativePacketItem> = emptyList(),
     val errorMessage: String? = null
 )
 
@@ -33,4 +33,5 @@ enum class ActionType {
     REFRESH_PACKETS,
     EXPORT_CAPTURE,
 }
+
 
