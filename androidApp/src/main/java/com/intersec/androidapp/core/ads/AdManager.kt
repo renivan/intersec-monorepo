@@ -14,8 +14,8 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
  */
 object AdManager {
     private const val TAG = "interSec_ADS"
-    // ID de Teste do Google (Seguro para desenvolvimento)
-    private const val REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+    // ID Real (Produção)
+    private const val REWARDED_AD_UNIT_ID = "ca-app-pub-4865121565284201/6248341008"
     
     private var rewardedAd: RewardedAd? = null
     private var isLoading = false
