@@ -1,0 +1,13 @@
+[package]
+name = "query-engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "query_engine"
+path = "src/lib.rs"
+
+[dependencies]
+core-types = { path = "../core-types" }
+flow-engine = { path = "../flow-engine" }
+use-cases = { path = "../use-cases" }

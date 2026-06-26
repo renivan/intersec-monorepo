@@ -1,0 +1,26 @@
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/core-types",
+    "crates/capture-reader",
+    "crates/protocol-engine",
+    "crates/flow-engine",
+    "crates/use-cases",
+    "crates/session-manager",
+    "crates/query-engine",
+    "crates/storage",
+    "crates/application-services",
+    "crates/engine-io",
+    "crates/security-dissector",
+    "crates/neural-intelligence",
+    "crates/traffic-valve",
+    "crates/facade-api",
+    "crates/mobile-bridge",
+    "crates/ffi-contracts",
+    "crates/android-adapter",
+    "crates/ios-adapter",
+    "crates/bridge-runtime",
+    "crates/kotlin-bridge-contracts",
+    "crates/android-jni-bridge",
+]
