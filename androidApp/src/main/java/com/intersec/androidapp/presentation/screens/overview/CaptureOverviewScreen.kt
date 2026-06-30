@@ -23,8 +23,32 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.data.model.dto.CommunicationDto
 import com.intersec.androidapp.data.model.dto.ProtocolStatDto
+import com.intersec.androidapp.presentation.screens.capture.formatVolume
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +90,7 @@ fun CaptureOverviewScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "VISÃO GERAL DE CONECTIVIDADE", 
+                        "VISÃO GERAL", 
                         color = MaterialTheme.colorScheme.primary, 
                         fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.titleLarge,
@@ -96,7 +121,7 @@ fun CaptureOverviewScreen(
                 .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
-            SectionHeader("MAPA DE CONECTIVIDADE ATIVO")
+            SectionHeader("MAPA DE CONECTIVIDADE")
             NeuralMapVisual(
                 modifier = Modifier
                     .height(220.dp)
@@ -122,7 +147,7 @@ fun CaptureOverviewScreen(
                         label = "FLUXOS ATIVOS",
                         value = state.session?.flowCount?.toString() ?: "0",
                         icon = Icons.Default.Route,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
                 Spacer(Modifier.height(8.dp))
@@ -146,9 +171,9 @@ fun CaptureOverviewScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            SectionHeader("PRINCIPAIS CONEXÕES DETECTADAS")
+            SectionHeader("CONEXÕES DETECTADAS")
             if (state.overview?.topCommunications?.isEmpty() == true) {
-                Text("AGUARDANDO DETECÇÃO DE FLUXOS...", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), fontFamily = FontFamily.Default)
+                Text("AGUARDANDO DETECÇÃO...", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Default)
             } else {
                 state.overview?.topCommunications?.forEach { comm ->
                     CommunicationItem(comm)
@@ -157,20 +182,9 @@ fun CaptureOverviewScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                SectionHeader("PROTOCOLOS")
-                Text("CAMADA DE SEGURANÇA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontFamily = FontFamily.Default)
-            }
-            
+            SectionHeader("PROTOCOLOS")
             state.overview?.let { overview ->
                 ProtocolFlowGrid(overview.protocolStats)
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            SectionHeader("LOG DE INTELIGÊNCIA")
-            state.overview?.events?.forEach { event ->
-                IntelligenceEventRow(event)
             }
 
             Spacer(Modifier.height(32.dp))
@@ -205,12 +219,13 @@ fun CaptureOverviewScreen(
             Button(
                 onClick = onOpenGeoMap,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                shape = RoundedCornerShape(4.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary, contentColor = MaterialTheme.colorScheme.onSecondary),
+                shape = RoundedCornerShape(4.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
             ) {
-                Icon(Icons.Default.Public, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Public, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("MAPA GEOGRÁFICO", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+                Text("MAPA GEOGRÁFICO", fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
             }
             
             Spacer(Modifier.height(8.dp))
@@ -218,7 +233,7 @@ fun CaptureOverviewScreen(
             Button(
                 onClick = onOpenSecurity,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f), contentColor = MaterialTheme.colorScheme.error),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f), contentColor = MaterialTheme.colorScheme.error),
                 shape = RoundedCornerShape(4.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
             ) {
@@ -260,7 +275,7 @@ fun CommunicationItem(comm: CommunicationDto) {
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("${comm.source} -> ${comm.destination}", color = Color.White, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Default, fontWeight = FontWeight.Bold)
+                Text("${comm.source} -> ${comm.destination}", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Default, fontWeight = FontWeight.Bold)
                 Row {
                     Text("PKTS: ${comm.packetCount}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f), fontFamily = FontFamily.Default)
                     Spacer(Modifier.width(8.dp))
@@ -285,35 +300,25 @@ fun ProtocolFlowGrid(protocols: List<ProtocolStatDto>) {
             FilterChip(
                 selected = proto.isPredominant,
                 onClick = {},
-                label = { Text(proto.name, color = Color.White, fontFamily = FontFamily.Default, fontSize = 10.sp) },
+                label = { Text(proto.name, fontFamily = FontFamily.Default, fontSize = 10.sp) },
                 leadingIcon = {
                     if (proto.isSecure) Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.primary)
                     else Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.Gray)
                 },
                 shape = RoundedCornerShape(2.dp),
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     containerColor = MaterialTheme.colorScheme.surface,
-                    labelColor = Color.White
+                    labelColor = MaterialTheme.colorScheme.onSurface,
+                    selectedLabelColor = MaterialTheme.colorScheme.primary
                 ),
                 border = FilterChipDefaults.filterChipBorder(
-                    borderColor = if (proto.isPredominant) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.3f),
+                    borderColor = if (proto.isPredominant) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                     enabled = true,
                     selected = proto.isPredominant,
                     borderWidth = 1.dp
                 )
             )
         }
-    }
-}
-
-@Composable
-fun IntelligenceEventRow(event: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically) {
-        Text(">", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
-        Spacer(Modifier.width(8.dp))
-        Text(event.uppercase(), color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Default)
     }
 }

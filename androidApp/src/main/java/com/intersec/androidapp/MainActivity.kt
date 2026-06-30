@@ -22,17 +22,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inicia o fluxo de consentimento ANTES de qualquer coisa de Ads
-        ConsentManager.requestConsent(this) {
-            MobileAds.initialize(this) {
-                // Preload de anúncio após inicialização bem sucedida
-                com.intersec.androidapp.core.ads.AdManager.preloadRewardedAd(this)
-            }
-        }
-
         setContent {
             val analysisViewModel: AnalysisViewModel = viewModel()
             val state by analysisViewModel.uiState.collectAsState()
+
+            // Inicia o fluxo de consentimento após o Compose estar pronto
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                ConsentManager.requestConsent(this@MainActivity) {
+                    MobileAds.initialize(this@MainActivity) {
+                        com.intersec.androidapp.core.ads.AdManager.preloadRewardedAd(this@MainActivity)
+                    }
+                }
+            }
 
             // Inicializa o gestor financeiro
             remember { 
@@ -42,7 +43,7 @@ class MainActivity : ComponentActivity() {
 
             InterSecTheme(
                 themeType = state.themeType,
-                dynamicColor = false
+                isDarkMode = state.isDarkMode
             ) {
                 InterSecApp(analysisViewModel)
             }

@@ -9,7 +9,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -53,7 +54,7 @@ fun SettingsScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "SYSTEM SETTINGS", 
+                        "CONFIGURAÇÕES", 
                         color = MaterialTheme.colorScheme.primary, 
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Default
@@ -75,49 +76,50 @@ fun SettingsScreen(
                 .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
-            SectionHeader("USER TIER STATUS")
+            SectionHeader("STATUS DO OPERADOR")
             Spacer(Modifier.height(16.dp))
             
             val isPro = state.userTier == 1
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isPro) Color.Cyan.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+                    containerColor = if (isPro) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
                 ),
-                border = BorderStroke(1.dp, if (isPro) Color.Cyan else Color.Gray.copy(alpha = 0.2f))
+                border = BorderStroke(1.dp, if (isPro) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
             ) {
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         if (isPro) Icons.Default.Star else Icons.Default.Person, 
                         contentDescription = null, 
-                        tint = if (isPro) Color.Cyan else Color.Gray
+                        tint = if (isPro) MaterialTheme.colorScheme.primary else Color.Gray
                     )
                     Spacer(Modifier.width(16.dp))
                     Column {
-                        Text(if (isPro) "PRO OPERATOR" else "BASIC OPERATOR", fontWeight = FontWeight.Bold, color = if (isPro) Color.Cyan else Color.White)
-                        Text(if (isPro) "ALL SYSTEMS OPERATIONAL" else "LIMITED ACCESS MODE", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text(if (isPro) "OPERADOR PRO" else "OPERADOR BÁSICO", fontWeight = FontWeight.Bold, color = if (isPro) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                        Text(if (isPro) "SISTEMAS OPERACIONAIS" else "ACESSO LIMITADO", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                     }
                 }
             }
 
             Spacer(Modifier.height(32.dp))
-            SectionHeader("GLOBAL PREFERENCES")
+            SectionHeader("AMBIENTE VISUAL")
             Spacer(Modifier.height(16.dp))
 
             SettingToggleItem(
-                title = "REAL-TIME ALERTS",
-                description = "RECEIVE CRITICAL THREAT ALERTS IN STATUS BAR.",
-                isActive = true,
-                onToggle = { }
+                title = if (state.isDarkMode) "MODO ESCURO" else "MODO CLARO",
+                description = "ALTERNAR LUMINOSIDADE DO TERMINAL.",
+                isActive = state.isDarkMode,
+                icon = if (state.isDarkMode) Icons.Default.DarkMode else Icons.Default.LightMode,
+                onToggle = { viewModel.toggleDarkMode(it) }
             )
 
             Spacer(Modifier.height(32.dp))
-            SectionHeader("CORE ENGINE SYNC")
+            SectionHeader("SINCRONIA COM MOTOR")
             Spacer(Modifier.height(16.dp))
             
             SettingToggleItem(
-                title = "INTELLIGENT SHIELD (IPS)",
-                description = "SYNCED WITH NATIVE CORE ENGINE.",
+                title = "ESCUDO INTELIGENTE (IPS)",
+                description = "SINCRONIZADO COM O NÚCLEO NATIVO.",
                 isActive = state.isShieldActive,
                 onToggle = { viewModel.toggleSmartShield(it) }
             )
@@ -125,18 +127,18 @@ fun SettingsScreen(
             Spacer(Modifier.height(16.dp))
             
             SettingToggleItem(
-                title = "GLOBAL KILL-SWITCH",
-                description = "PREVENTIVE TRAFFIC TERMINATION.",
+                title = "KILL-SWITCH GLOBAL",
+                description = "TERMINAÇÃO PREVENTIVA DE TRÁFEGO.",
                 isActive = state.isKillSwitchOn,
                 onToggle = { viewModel.toggleKillSwitch(it) }
             )
 
             Spacer(Modifier.height(32.dp))
-            SectionHeader("🎨 VISUAL IDENTITY & THEMES (PRO)")
+            SectionHeader("🎨 IDENTIDADE VISUAL (PRO)")
             Spacer(Modifier.height(16.dp))
             
             Text(
-                "CHOOSE YOUR OPERATIONAL SKIN. ALTERNATIVE THEMES REQUIRE PRO CLEARANCE.",
+                "ESCOLHA SUA INTERFACE. TEMAS ALTERNATIVOS REQUEREM ACESSO PRO.",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray,
                 fontFamily = FontFamily.Default,
@@ -178,7 +180,7 @@ fun ThemeOptionItem(
             )
             .border(
                 1.dp,
-                if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.1f),
+                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                 RoundedCornerShape(4.dp)
             )
             .padding(16.dp),
@@ -192,7 +194,7 @@ fun ThemeOptionItem(
         Spacer(Modifier.width(12.dp))
         Text(
             text = theme.label.uppercase(),
-            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Default
@@ -219,18 +221,23 @@ fun SettingToggleItem(
     title: String,
     description: String,
     isActive: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     onToggle: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
-            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(16.dp))
+        }
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
             Text(description, color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Default)
         }
         Switch(

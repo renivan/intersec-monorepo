@@ -71,6 +71,10 @@ class AnalysisViewModel(
         securitySettings.rewardedMinutesMonth.onEach { mins ->
             _uiState.update { it.copy(rewardedMinutesMonth = mins) }
         }.launchIn(viewModelScope)
+
+        securitySettings.isDarkMode.onEach { isDark ->
+            _uiState.update { it.copy(isDarkMode = isDark) }
+        }.launchIn(viewModelScope)
     }
 
     private fun syncSecurityWithNative() {
@@ -113,6 +117,12 @@ class AnalysisViewModel(
     fun updateTheme(theme: AppThemeType) {
         viewModelScope.launch {
             securitySettings.setThemeType(theme.id)
+        }
+    }
+
+    fun toggleDarkMode(isDark: Boolean) {
+        viewModelScope.launch {
+            securitySettings.setDarkMode(isDark)
         }
     }
 

@@ -26,6 +26,7 @@ class SecuritySettingsManager(private val context: Context) {
         private val KEY_THEME_TYPE = intPreferencesKey("app_theme_type")
         private val KEY_REWARDED_MINUTES_MONTH = intPreferencesKey("rewarded_minutes_month")
         private val KEY_LAST_REWARD_MONTH = intPreferencesKey("last_reward_month")
+        private val KEY_IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
     }
 
     val smartShieldActive: Flow<Boolean> = context.dataStore.data.map { it[KEY_SMART_SHIELD] ?: true }
@@ -35,6 +36,7 @@ class SecuritySettingsManager(private val context: Context) {
     val themeType: Flow<Int> = context.dataStore.data.map { it[KEY_THEME_TYPE] ?: 0 }
     val rewardedMinutesMonth: Flow<Int> = context.dataStore.data.map { it[KEY_REWARDED_MINUTES_MONTH] ?: 0 }
     val lastRewardMonth: Flow<Int> = context.dataStore.data.map { it[KEY_LAST_REWARD_MONTH] ?: -1 }
+    val isDarkMode: Flow<Boolean> = context.dataStore.data.map { it[KEY_IS_DARK_MODE] ?: true }
 
     suspend fun setSmartShield(active: Boolean) {
         context.dataStore.edit { it[KEY_SMART_SHIELD] = active }
@@ -57,6 +59,10 @@ class SecuritySettingsManager(private val context: Context) {
 
     suspend fun setThemeType(typeId: Int) {
         context.dataStore.edit { it[KEY_THEME_TYPE] = typeId }
+    }
+
+    suspend fun setDarkMode(active: Boolean) {
+        context.dataStore.edit { it[KEY_IS_DARK_MODE] = active }
     }
 
     suspend fun addRewardedMinute(currentMonth: Int) {

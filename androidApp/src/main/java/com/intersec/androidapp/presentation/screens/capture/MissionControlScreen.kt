@@ -48,7 +48,6 @@ fun MissionControlScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val activity = context as? Activity
     val scrollState = rememberScrollState()
 
     val filePicker = rememberLauncherForActivityResult(
@@ -131,7 +130,7 @@ fun MissionControlScreen(
             modifier = Modifier.height(280.dp) 
         ) {
             item { TacticalCard("FLUXOS", "CANAIS ATIVOS", Icons.Default.SwapHoriz, MaterialTheme.colorScheme.primary, onOpenFlows) }
-            item { TacticalCard("PACOTES", "DETALHAMENTO", Icons.AutoMirrored.Filled.List, Color.White, onOpenPackets) }
+            item { TacticalCard("PACOTES", "DETALHAMENTO", Icons.AutoMirrored.Filled.List, MaterialTheme.colorScheme.onSurface, onOpenPackets) }
             item { TacticalCard("VISÃO GERAL", "MAPA DE REDE", Icons.Default.Assessment, MaterialTheme.colorScheme.primary, onOpenOverview) }
             item { TacticalCard("PROTEÇÃO", "DEFESA ATIVA", Icons.Default.Security, MaterialTheme.colorScheme.error, onOpenSecurity) }
         }
@@ -169,7 +168,7 @@ fun MissionControlScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        // ===== ALERTAS DE COMPORTAMENTO (DADOS REAIS DO MOTOR Native) =====
+        // ===== ALERTAS DE COMPORTAMENTO =====
         SectionHeader("ALERTAS DE COMPORTAMENTO")
         
         val events = state.overview?.events ?: emptyList()
@@ -226,7 +225,7 @@ fun UpgradeBanner(onClick: () -> Unit) {
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text("LIBERAR ACESSO PRO", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("Remova limites de tempo e habilite temas exclusivos.", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                Text("Remova limites de tempo e habilite temas exclusivos.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
             }
             Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
         }
@@ -243,60 +242,26 @@ fun SubscriptionAdModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.Black.copy(alpha = 0.85f))
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
                 .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                 .padding(24.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Fechar
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.Gray)
                     }
                 }
-
-                Icon(
-                    Icons.Default.VerifiedUser,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-
+                Icon(Icons.Default.VerifiedUser, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.height(16.dp))
-
-                Text(
-                    "INTERSEC PRO",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Black,
-                    color = Color.White
-                )
-                
-                Text(
-                    "NÍVEL ANALISTA EXPERIENTE",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
+                Text("INTERSEC PRO", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
+                Text("NÍVEL ANALISTA EXPERIENTE", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.height(24.dp))
-
-                Text(
-                    "Acesse o monitoramento ilimitado, todos os temas visuais e suporte a atualizações prioritárias de inteligência.",
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.bodySmall
-                )
-
+                Text("Acesse o monitoramento ilimitado, todos os temas visuais e suporte a atualizações prioritárias de inteligência.", textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(32.dp))
-
-                Button(
-                    onClick = onUpgrade,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
+                Button(onClick = onUpgrade, modifier = Modifier.fillMaxWidth().height(56.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(8.dp)) {
                     Text("INICIAR TESTE POR R$ 1,00", fontWeight = FontWeight.Bold)
                 }
-
                 TextButton(onClick = onDismiss) {
                     Text("CONTINUAR NO MODO LIMITADO", color = Color.Gray, fontSize = 10.sp)
                 }
@@ -369,7 +334,7 @@ fun NetworkStatusSection(
                         "INTERFACE: ${networkState.interfaceName.uppercase()} (${networkState.typeName.uppercase()})" 
                         else "IDLE: AGUARDANDO REDE",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Default
                 )
@@ -427,7 +392,7 @@ fun TacticalCard(title: String, subtitle: String, icon: ImageVector, color: Colo
         ) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
             Spacer(Modifier.height(8.dp))
-            Text(title, color = Color.White, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
             Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Default)
         }
     }
@@ -448,7 +413,7 @@ fun ActiveSessionPanel(sourceName: String, packetCount: Long, onClear: () -> Uni
             Icon(Icons.Default.Adjust, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(sourceName.uppercase(), color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+                Text(sourceName.uppercase(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
                 Text("PKTS: $packetCount", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Default)
             }
             IconButton(onClick = onLogs) { Icon(Icons.Default.Terminal, contentDescription = "Logs", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }

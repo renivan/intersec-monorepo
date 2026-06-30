@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Locale
 
 @Composable
 fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
@@ -38,7 +37,7 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
     ) {
         val primaryColor = MaterialTheme.colorScheme.primary
-        val secondaryColor = Color.White
+        val secondaryColor = MaterialTheme.colorScheme.onSurface
         
         Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             val center = Offset(size.width / 2, size.height / 2)
@@ -77,15 +76,15 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
                     center.x + (radius * 0.6f) * kotlin.math.cos(angle),
                     center.y + (radius * 0.6f) * kotlin.math.sin(angle)
                 )
-                drawCircle(color = secondaryColor.copy(alpha = 0.5f), radius = 3.dp.toPx(), center = pulsePos)
+                drawCircle(color = primaryColor.copy(alpha = 0.5f), radius = 3.dp.toPx(), center = pulsePos)
 
                 // External Node
-                drawCircle(color = secondaryColor, radius = 5.dp.toPx(), center = nodePos)
+                drawCircle(color = secondaryColor.copy(alpha = 0.8f), radius = 5.dp.toPx(), center = nodePos)
             }
         }
         
         Text(
-            "CORE ANALYTICS ACTIVE",
+            "SCAN ATIVO",
             modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
@@ -102,22 +101,14 @@ fun OverviewMiniCard(modifier: Modifier, label: String, value: String, icon: Ima
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(4.dp),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.1f))
+        border = BorderStroke(1.dp, color.copy(alpha = 0.2f))
     ) {
         Column(Modifier.padding(12.dp)) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(8.dp))
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, fontFamily = FontFamily.Default, color = Color.White)
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, fontFamily = FontFamily.Default, color = MaterialTheme.colorScheme.onSurface)
             Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontFamily = FontFamily.Default)
         }
-    }
-}
-
-fun formatVolume(bytes: Long): String {
-    return when {
-        bytes >= 1024 * 1024 -> String.format(Locale.getDefault(), "%.1f MB", bytes.toFloat() / (1024 * 1024))
-        bytes >= 1024 -> String.format(Locale.getDefault(), "%.1f KB", bytes.toFloat() / 1024)
-        else -> "$bytes bytes"
     }
 }
 

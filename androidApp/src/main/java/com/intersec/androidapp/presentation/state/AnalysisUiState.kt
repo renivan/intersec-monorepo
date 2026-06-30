@@ -52,6 +52,7 @@ data class AnalysisUiState(
     val securityLevel: Int = 1,
     val userTier: Int = 0, // 0=FREE, 1=PRO
     val themeType: AppThemeType = AppThemeType.CYBER_INTERSECURITY,
+    val isDarkMode: Boolean = true,
     val rewardedMinutesMonth: Int = 0,
     val showAdRewardDialog: Boolean = false,
     val firewallRules: List<FirewallRule> = emptyList(),

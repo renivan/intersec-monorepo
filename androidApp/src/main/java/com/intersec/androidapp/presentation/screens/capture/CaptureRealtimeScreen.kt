@@ -74,14 +74,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.core.ads.AdManager
-import com.intersec.androidapp.presentation.screens.overview.formatVolume
 import com.intersec.androidapp.presentation.state.*
 import com.intersec.androidapp.presentation.viewmodel.CaptureRealtimeViewModel
 import java.util.Locale
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import com.intersec.androidapp.core.vpn.InterSecVpnService
+
+/**
+ * Função de utilidade compartilhada para formatação de volume de dados.
+ */
+fun formatVolume(bytes: Long): String {
+    return when {
+        bytes >= 1024 * 1024 * 1024 -> String.format(Locale.US, "%.1f GB", bytes.toFloat() / (1024 * 1024 * 1024))
+        bytes >= 1024 * 1024 -> String.format(Locale.US, "%.1f MB", bytes.toFloat() / (1024 * 1024))
+        bytes >= 1024 -> String.format(Locale.US, "%.1f KB", bytes.toFloat() / 1024)
+        else -> "$bytes bytes"
+    }
+}
 
 @Composable
 fun CaptureRealtimeScreen(
@@ -217,7 +227,7 @@ fun CaptureHeader(state: CaptureRealtimeUiState, onBack: () -> Unit) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Voltar",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
             Spacer(Modifier.width(8.dp))
@@ -225,7 +235,7 @@ fun CaptureHeader(state: CaptureRealtimeUiState, onBack: () -> Unit) {
                 "Captura Real-time",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -242,7 +252,7 @@ fun CaptureHeader(state: CaptureRealtimeUiState, onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        color = Color.White.copy(alpha = 0.1f),
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
         thickness = 1.dp
     )
 }
@@ -260,7 +270,7 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
             containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, if (isPro) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f))
+        border = BorderStroke(1.dp, if (isPro) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -271,13 +281,13 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                 Text(
                     if (isPro) "INTERFACE ATIVA" else "CONEXÃO AUTOMÁTICA",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
-                Text(state.networkInterface, color = if (isPro) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f), fontWeight = FontWeight.ExtraBold)
+                Text(state.networkInterface, color = if (isPro) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold)
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text("TIPO DE CONEXÃO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text(state.networkName.uppercase(), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("TIPO DE CONEXÃO", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) )
+                Text(state.networkName.uppercase(), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             if (isPro) {
                 Icon(Icons.Default.SettingsInputAntenna, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -303,12 +313,17 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                     items(state.availableInterfaces) { info ->
                         val isSelected = state.networkInterface == info.interfaceName
+                        val icon = when(info.typeName) {
+                            "Wi-Fi" -> Icons.Default.Wifi
+                            "Ethernet" -> Icons.Default.SettingsInputHdmi
+                            else -> Icons.Default.SignalCellularAlt
+                        }
                         ListItem(
                             headlineContent = { 
                                 Text(
                                     info.interfaceName, 
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 ) 
                             },
                             supportingContent = { 
@@ -318,11 +333,6 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                                 ) 
                             },
                             leadingContent = { 
-                                val icon = when(info.typeName) {
-                                    "Wi-Fi" -> Icons.Default.Wifi
-                                    "Ethernet" -> Icons.Default.SettingsInputHdmi
-                                    else -> Icons.Default.SignalCellularAlt
-                                }
                                 Icon(icon, contentDescription = null, tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray)
                             },
                             trailingContent = {
@@ -332,7 +342,7 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                             },
                             colors = ListItemDefaults.colors(
                                 containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent,
-                                headlineColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+                                headlineColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                                 leadingIconColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
                             ),
                             modifier = Modifier
@@ -348,7 +358,7 @@ fun InterfaceNetworkCard(state: CaptureRealtimeUiState, viewModel: CaptureRealti
                                     showInterfaceDialog = false 
                                 }
                         )
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
                     }
                 }
             },
@@ -378,7 +388,7 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
                     "• O motor Native processa tudo localmente.\n" +
                     "• Isso permite detectar invasões e vazamentos.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
@@ -391,13 +401,13 @@ fun VpnTermsDialog(onAccept: () -> Unit, onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onAccept,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
             ) {
                 Text("ACEITAR E ATIVAR PROTEÇÃO")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = { onDismiss() }) {
                 Text("CANCELAR")
             }
         }
@@ -411,7 +421,7 @@ fun CaptureFilterSection(state: CaptureRealtimeUiState, viewModel: CaptureRealti
             "🎯 Filtro BPF (Opcional)",
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         
@@ -423,10 +433,10 @@ fun CaptureFilterSection(state: CaptureRealtimeUiState, viewModel: CaptureRealti
             enabled = !state.isCapturing,
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface
             ),
@@ -440,7 +450,7 @@ fun CaptureControlsSection(
     state: CaptureRealtimeUiState,
     viewModel: CaptureRealtimeViewModel,
     activity: Activity?,
-    context: Context
+    context: android.content.Context
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -469,7 +479,8 @@ fun CaptureControlsSection(
                 },
                 modifier = Modifier.weight(1f).height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, Color(0xFF22C55E).copy(alpha = 0.5f))
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -484,7 +495,8 @@ fun CaptureControlsSection(
                 onClick = { if (state.isPaused) viewModel.resumeCapture() else viewModel.pauseCapture() },
                 modifier = Modifier.weight(1f).height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = controlColor),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, controlColor.copy(alpha = 0.5f))
             ) {
                 Icon(controlIcon, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -498,7 +510,8 @@ fun CaptureControlsSection(
                 },
                 modifier = Modifier.weight(1f).height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, Color(0xFFEF4444).copy(alpha = 0.5f))
             ) {
                 Icon(Icons.Default.Stop, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -515,7 +528,8 @@ fun CaptureStatusSection(state: CaptureRealtimeUiState) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -523,18 +537,18 @@ fun CaptureStatusSection(state: CaptureRealtimeUiState) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("DURAÇÃO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
+                Text("DURAÇÃO", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 Text(
                     String.format("%02d:%02d:%02d", 
                         state.elapsedSeconds / 3600, 
                         (state.elapsedSeconds % 3600) / 60, 
                         state.elapsedSeconds % 60),
-                    color = Color.White, fontWeight = FontWeight.Bold
+                    color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("PACOTES", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.5f))
-                Text(state.totalPackets.toString(), color = Color.White, fontWeight = FontWeight.Bold)
+                Text("PACOTES", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Text(state.totalPackets.toString(), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -567,11 +581,11 @@ fun CaptureSummaryModal(
                     (state.elapsedSeconds % 3600) / 60, 
                     state.elapsedSeconds % 60))
                 SummaryRow("VOLUME TOTAL", formatVolume(state.totalBytes))
-                
+
                 val avgSize = if (state.totalPackets > 0) state.totalBytes / state.totalPackets else 0L
                 SummaryRow("TAMANHO MÉDIO PKT", "$avgSize bytes")
                 
-                HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 8.dp))
                 
                 Text(
                     "DESEJA DESCARTAR OS DADOS OU PROSSEGUIR COM A ANÁLISE DETALHADA?",
@@ -584,8 +598,9 @@ fun CaptureSummaryModal(
         confirmButton = {
             Button(
                 onClick = onAnalyze,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = Color.Black),
-                shape = RoundedCornerShape(4.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
+                shape = RoundedCornerShape(4.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
             ) {
                 Text(if (state.userTier == 0) "ASSISTIR AD E ANALISAR" else "ANALISAR DADOS", fontWeight = FontWeight.Bold)
             }
@@ -596,7 +611,7 @@ fun CaptureSummaryModal(
                     Text("DESCARTAR", color = Color.Red.copy(alpha = 0.7f))
                 }
                 TextButton(onClick = onContinue) {
-                    Text("MANTER PAUSADO", color = Color.White)
+                    Text("MANTER PAUSADO", color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
@@ -610,7 +625,7 @@ fun SummaryRow(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontFamily = FontFamily.Default)
-        Text(value, style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
+        Text(value, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Default)
     }
 }
 
@@ -621,9 +636,9 @@ fun PacketsListSection(state: CaptureRealtimeUiState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp) // Limita a altura para o "prompt pequeno"
-            .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+            .height(280.dp) 
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
             .padding(8.dp)
     ) {
         PrimaryTabRow(
@@ -632,10 +647,10 @@ fun PacketsListSection(state: CaptureRealtimeUiState) {
             contentColor = MaterialTheme.colorScheme.primary
         ) {
             Tab(selected = !showFlows, onClick = { showFlows = false }) {
-                Text("PACOTES", modifier = Modifier.padding(12.dp), color = Color.White)
+                Text("PACOTES", modifier = Modifier.padding(12.dp), color = MaterialTheme.colorScheme.onSurface)
             }
             Tab(selected = showFlows, onClick = { showFlows = true }) {
-                Text("FLUXOS", modifier = Modifier.padding(12.dp), color = Color.White)
+                Text("FLUXOS", modifier = Modifier.padding(12.dp), color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
@@ -680,7 +695,7 @@ fun FlowRow(flow: RealtimeFlowModel) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, if (flow.isInsecure) Color.Red.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f))
+        border = BorderStroke(1.dp, if (flow.isInsecure) Color.Red.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -694,12 +709,12 @@ fun FlowRow(flow: RealtimeFlowModel) {
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(flow.label, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
-                Text(flow.endpoints, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                Text(flow.label, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
+                Text(flow.endpoints, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("${flow.packetCount} pkts", style = MaterialTheme.typography.labelSmall, color = Color.Green)
-                Text("${flow.payloadBytes} bytes", style = MaterialTheme.typography.labelSmall, color = Color.LightGray)
+                Text("${flow.packetCount} pkts", style = MaterialTheme.typography.labelSmall, color = Color(0xFF22C55E))
+                Text("${flow.payloadBytes} bytes", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
             }
         }
     }
@@ -720,12 +735,12 @@ fun PacketRow(packet: RealtimePacketModel) {
                 Text(
                     "${String.format(Locale.US, "%.3f", packet.timestampSeconds)}s",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
                 Text(packet.protocol, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(4.dp))
-            Text(packet.info, style = MaterialTheme.typography.bodySmall, color = Color.White, fontFamily = FontFamily.Default)
+            Text(packet.info, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Default)
         }
     }
 }

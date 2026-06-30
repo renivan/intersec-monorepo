@@ -2,12 +2,20 @@ package com.intersec.androidapp.core.billing
 
 import android.app.Activity
 import android.util.Log
-import com.android.billingclient.api.*
+import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 /**
  * BillingManager: Responsável pela ponte financeira com o Google Play.
@@ -82,11 +90,16 @@ class BillingManager(
 
         billingClient.queryProductDetailsAsync(params) { result, productDetailsList ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
-                val offerToken = productDetailsList[0].subscriptionOfferDetails?.get(0)?.offerToken ?: ""
+                val details = productDetailsList[0]
+                val offers = details.subscriptionOfferDetails
+                var offerToken = ""
+                if (offers != null && offers.isNotEmpty()) {
+                    offerToken = offers[0].offerToken
+                }
                 
                 val productDetailsParamsList = listOf(
                     BillingFlowParams.ProductDetailsParams.newBuilder()
-                        .setProductDetails(productDetailsList[0])
+                        .setProductDetails(details)
                         .setOfferToken(offerToken)
                         .build()
                 )
@@ -114,7 +127,7 @@ class BillingManager(
 
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            // TODO: Aqui entra a Verificação via Servidor (Firebase)
+            // TODO: Aqui entra a Verificação via servidor (Firebase)
             // Por enquanto, valida localmente para permitir o teste de UI
             if (!purchase.isAcknowledged) {
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
