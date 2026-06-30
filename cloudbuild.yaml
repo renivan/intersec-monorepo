@@ -1,26 +1,16 @@
 # Google Cloud Build - interSec Pipeline (intersec-monorepo)
-# Este arquivo automatiza a geração do arquivo de produção (.aab)
+# Este arquivo automatiza a geração do arquivo de produção (.aab) e (.apk)
 
 steps:
-  # 1. Configurar o ambiente e aceitar licenças do Android
-  - name: 'gcr.io/cloud-builders/gradle'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        mkdir -p "$ANDROID_HOME/licenses"
-        echo -e "8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb7437af21d73be4d27d\n24333f8a63b6825ea9c5514f83c2829b004dcc51" > "$ANDROID_HOME/licenses/android-sdk-license"
-        echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-
-  # 2. Executar a limpeza e compilar o Shared Module
+  # 1. Executar a limpeza e compilar o Shared Module
   - name: 'gcr.io/cloud-builders/gradle'
     args: [':shared:assemble']
 
-  # 3. Compilar o App Bundle de Produção (AAB) para a Play Store
+  # 2. Compilar o App Bundle de Produção (AAB) para a Play Store
   - name: 'gcr.io/cloud-builders/gradle'
     args: [':androidApp:bundleRelease']
 
-  # 4. Compilar o APK de Produção para GitHub Releases/Testes Manuais
+  # 3. Compilar o APK de Produção para GitHub Releases/Testes Manuais
   - name: 'gcr.io/cloud-builders/gradle'
     args: [':androidApp:assembleRelease']
 
@@ -29,7 +19,7 @@ options:
   machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
 
-# 5. Salvar os arquivos resultantes no Google Cloud Storage
+# 4. Salvar os arquivos resultantes no Google Cloud Storage
 artifacts:
   objects:
     location: 'gs://${_ARTIFACT_BUCKET}/intersec-monorepo/builds/$BUILD_ID'
@@ -40,4 +30,4 @@ artifacts:
 
 # Variáveis globais para o build
 substitutions:
-  _ARTIFACT_BUCKET: 'intersec-artifacts-build' # Altere no console se necessário
+  _ARTIFACT_BUCKET: 'intersec-artifacts-build'
