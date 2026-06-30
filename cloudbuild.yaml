@@ -1,10 +1,10 @@
 # Google Cloud Build - interSec Pipeline (intersec-monorepo)
-# Usando imagem otimizada com Android SDK e ferramentas Linux completas (como xargs)
+# Usando a imagem estável Eclipse Temurin (Opção A) - Completa com xargs e ferramentas de shell
 
 steps:
   # 1. Compilar usando o Gradle Wrapper do projeto
-  # Esta imagem já contém o Android SDK, Java 17 e ferramentas essenciais de shell
-  - name: 'mobiledevops/android-sdk-image:34-jdk17'
+  # O Temurin 17 já inclui todas as ferramentas de terminal necessárias
+  - name: 'eclipse-temurin:17'
     entrypoint: 'bash'
     args:
       - '-c'
