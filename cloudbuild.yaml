@@ -55,7 +55,7 @@ artifacts:
     paths:
       - 'androidApp/build/outputs/bundle/release/*.aab'
       - 'androidApp/build/outputs/apk/release/*.apk'
-      - 'androidApp/build/outputs/mapping/release/mapping.txt'
+      - 'androidApp/build/outputs/mapping/release/**/mapping.txt'
 
 # Variáveis globais para o build
 substitutions:
