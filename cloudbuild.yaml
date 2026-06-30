@@ -1,9 +1,9 @@
 # Google Cloud Build - interSec Pipeline (intersec-monorepo)
-# Este arquivo utiliza o Gradle Wrapper do projeto para garantir a versão 9.6
+# Usando imagem estável do Android para garantir compatibilidade e ferramentas
 
 steps:
-  # 1. Dar permissão de execução ao gradlew e compilar
-  - name: 'openjdk:17-jdk-slim'
+  # 1. Compilar usando o Gradle Wrapper do projeto
+  - name: 'ghcr.io/graalvm/jdk-community:17'
     entrypoint: 'bash'
     args:
       - '-c'
