@@ -16,20 +16,25 @@ steps:
   - name: 'gcr.io/cloud-builders/gradle'
     args: [':shared:assemble']
 
-  # 3. Compilar o App Bundle de Produção (AAB)
+  # 3. Compilar o App Bundle de Produção (AAB) para a Play Store
   - name: 'gcr.io/cloud-builders/gradle'
     args: [':androidApp:bundleRelease']
+
+  # 4. Compilar o APK de Produção para GitHub Releases/Testes Manuais
+  - name: 'gcr.io/cloud-builders/gradle'
+    args: [':androidApp:assembleRelease']
 
 # Configurações de performance para build Android (Requer máquinas com mais RAM)
 options:
   machineType: 'E2_HIGHCPU_8'
 
-# 4. Salvar o arquivo resultante no Google Cloud Storage
+# 5. Salvar os arquivos resultantes no Google Cloud Storage
 artifacts:
   objects:
     location: 'gs://${_ARTIFACT_BUCKET}/intersec-monorepo/builds/$BUILD_ID'
     paths:
       - 'androidApp/build/outputs/bundle/release/*.aab'
+      - 'androidApp/build/outputs/apk/release/*.apk'
       - 'androidApp/build/outputs/mapping/release/mapping.txt'
 
 # Variáveis globais para o build
