@@ -24,9 +24,10 @@ steps:
   - name: 'gcr.io/cloud-builders/gradle'
     args: [':androidApp:assembleRelease']
 
-# Configurações de performance para build Android (Requer máquinas com mais RAM)
+# Configurações de performance e logs
 options:
   machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
 
 # 5. Salvar os arquivos resultantes no Google Cloud Storage
 artifacts:
