@@ -4,7 +4,7 @@
 steps:
   # 1. Executar a limpeza e compilar o Shared Module
   - name: 'gcr.io/cloud-builders/gradle'
-    args: [':shared:assemble']
+    args: ['clean', ':shared:assemble']
 
   # 2. Compilar o App Bundle de Produção (AAB) para a Play Store
   - name: 'gcr.io/cloud-builders/gradle'
