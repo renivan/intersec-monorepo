@@ -1,9 +1,10 @@
 # Google Cloud Build - interSec Pipeline (intersec-monorepo)
-# Usando imagem estável do Android para garantir compatibilidade e ferramentas
+# Usando imagem otimizada com Android SDK e ferramentas Linux completas (como xargs)
 
 steps:
   # 1. Compilar usando o Gradle Wrapper do projeto
-  - name: 'ghcr.io/graalvm/jdk-community:17'
+  # Esta imagem já contém o Android SDK, Java 17 e ferramentas essenciais de shell
+  - name: 'mobiledevops/android-sdk-image:34-jdk17'
     entrypoint: 'bash'
     args:
       - '-c'
