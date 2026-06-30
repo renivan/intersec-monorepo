@@ -2,7 +2,15 @@
 # Configuração Dinâmica: Baixa o Android SDK e as ferramentas necessárias em tempo de execução
 
 steps:
-  # 1. Preparar o Ambiente Android e Compilar
+  # 1. Recuperar o google-services.json do Secret Manager
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud secrets versions access latest --secret="google-services-json" > androidApp/google-services.json
+
+  # 2. Preparar o Ambiente Android e Compilar
   - name: 'eclipse-temurin:17'
     entrypoint: 'bash'
     args:
