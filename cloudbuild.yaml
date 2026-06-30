@@ -21,8 +21,8 @@ steps:
         rm sdk.zip
 
         # Configurar variáveis de ambiente cruciais para o Gradle
-        export ANDROID_HOME=$PWD/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+        export ANDROID_HOME=$${PWD}/android-sdk
+        export PATH=$${PATH}:$${ANDROID_HOME}/cmdline-tools/latest/bin:$${ANDROID_HOME}/platform-tools
 
         # Aceitar licenças automaticamente
         yes | sdkmanager --licenses > /dev/null
