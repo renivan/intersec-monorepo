@@ -51,7 +51,7 @@ options:
 # 2. Salvar os arquivos resultantes no Google Cloud Storage
 artifacts:
   objects:
-    location: 'gs://$${_ARTIFACT_BUCKET}/intersec-monorepo/builds/$$BUILD_ID'
+    location: 'gs://${_ARTIFACT_BUCKET}/intersec-monorepo/builds/$BUILD_ID'
     paths:
       - 'androidApp/build/outputs/bundle/release/*.aab'
       - 'androidApp/build/outputs/apk/release/*.apk'
