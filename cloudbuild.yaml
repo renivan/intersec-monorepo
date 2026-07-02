@@ -40,8 +40,9 @@ steps:
         sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
 
         # Dar permissão e executar a compilação real do AAB e APK
+        # Forçamos o Gradle a usar mais memória para evitar o erro de Heap Space
         chmod +x gradlew
-        ./gradlew clean :shared:assemble :androidApp:bundleRelease :androidApp:assembleRelease
+        ./gradlew clean :shared:assemble :androidApp:bundleRelease :androidApp:assembleRelease -Dorg.gradle.jvmargs="-Xmx4096m"
 
 # Configurações de performance e logs
 options:
