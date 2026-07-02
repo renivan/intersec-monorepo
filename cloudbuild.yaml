@@ -1,7 +1,8 @@
-# Google Cloud Build - interSec Pipeline (Otimizado v2)
+# Google Cloud Build - interSec Pipeline (Otimizado v3)
+# Utiliza imagem customizada com Android SDK pré-instalado para builds ultra-rápidos
 
 steps:
-  # 0. Recuperar segredos
+  # 0. Recuperar segredos do Secret Manager
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'fetch-secrets'
     entrypoint: 'bash'
@@ -10,28 +11,13 @@ steps:
       - |
         gcloud secrets versions access latest --secret="google-services-json" > androidApp/google-services.json
 
-  # 1. Compilação usando a imagem customizada (Mais rápido)
-  # Nota: Após subir sua imagem, troque o name abaixo para o link do seu Artifact Registry
-  - name: 'eclipse-temurin:17' # Temporário até você gerar a imagem do Dockerfile.build
+  # 1. Compilação usando a imagem customizada do interSec
+  - name: 'us-central1-docker.pkg.dev/intersec-56328/intersec-images/android-builder:v1'
     id: 'gradle-build'
-    env:
-      - 'ANDROID_HOME=/opt/android-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Se estiver usando a imagem padrão, instala o SDK (Remover após criar imagem customizada)
-        if [ ! -d "/opt/android-sdk" ]; then
-          apt-get update && apt-get install -y wget unzip
-          mkdir -p /opt/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip
-          unzip -q sdk.zip -d /opt/android-sdk/cmdline-tools
-          mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest
-          export PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin
-          yes | sdkmanager --licenses > /dev/null
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
-        fi
-        
         chmod +x gradlew
         ./gradlew clean :shared:assemble :androidApp:bundleRelease :androidApp:assembleRelease -Dorg.gradle.jvmargs="-Xmx4096m"
 
@@ -40,7 +26,7 @@ options:
   machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
 
-# Armazenamento de Artefatos
+# Armazenamento de Artefatos (AAB e APK)
 artifacts:
   objects:
     location: 'gs://${_ARTIFACT_BUCKET}/intersec-monorepo/builds/$BUILD_ID'
@@ -48,5 +34,6 @@ artifacts:
       - 'androidApp/build/outputs/bundle/release/*.aab'
       - 'androidApp/build/outputs/apk/release/*.apk'
 
+# Variável de Bucket (Certifique-se de configurar no Gatilho/Trigger do Cloud Build)
 substitutions:
   _ARTIFACT_BUCKET: 'intersec-artifacts-build'

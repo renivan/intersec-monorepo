@@ -1,39 +1,24 @@
-# Imagem base com Java 17
-# FROM eclipse-temurin:17-jdk
-
-# Variáveis de ambiente para o Android SDK
-# ENV ANDROID_HOME /opt/android-sdk
-# ENV PATH ${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
-
-# Instalar dependências do sistema
-# RUN apt-get update && apt-get install -y wget unzip && rm -rf /var/lib/apt/lists/*
-
-# Baixar e instalar Android Command Line Tools
-# RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
-  #  wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip && \
-   # unzip -q sdk.zip -d ${ANDROID_HOME}/cmdline-tools && \
-    # mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
-    # rm sdk.zip
-
-# Aceitar licenças e instalar plataformas necessárias (SDK 34/35)
-# RUN yes | sdkmanager --licenses && \
-    # sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-# WORKDIR /workspace
-
-
-
-# Usamos uma imagem base leve com Java 17
+# Imagem base com Java 17 (Ubuntu Jammy)
 FROM eclipse-temurin:17-jdk-jammy
 
-# Instalar dependências necessárias
-RUN apt-get update &amp;&amp; apt-get install -y --no-install-recommends \
-    wget unzip git lib32stdc++6 lib32z1 &amp;&amp; \
+# Instalar dependências necessárias do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget unzip git lib32stdc++6 lib32z1 && \
     rm -rf /var/lib/apt/lists/*
 
 # Configurar diretório do SDK
 ENV ANDROID_HOME=/opt/android-sdk
-…
-# Aceitar licenças e instalar componentes específicos
-RUN yes | sdkmanager --licenses &gt; /dev/null &amp;&amp; \
+ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
+
+# Baixar e instalar Android Command Line Tools
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip && \
+    unzip -q sdk.zip -d ${ANDROID_HOME}/cmdline-tools && \
+    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+    rm sdk.zip
+
+# Aceitar licenças e instalar componentes (Android 34/35)
+RUN yes | sdkmanager --licenses > /dev/null && \
     sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+WORKDIR /workspace
