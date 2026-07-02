@@ -116,8 +116,10 @@ fun InterSecTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
             val insetsController = WindowCompat.getInsetsController(window, view)
+            
+            // Lógica moderna para barra de status (sem avisos de depreciação)
+            window.statusBarColor = colorScheme.background.toArgb()
             insetsController.isAppearanceLightStatusBars = !isDarkMode
         }
     }

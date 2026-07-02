@@ -103,10 +103,10 @@ object NetworkInspector {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun getCellularGeneration(context: Context): String {
         val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         return try {
-            @SuppressLint("MissingPermission")
             @Suppress("DEPRECATION")
             val networkType = try {
                 telephonyManager.networkType
@@ -114,6 +114,7 @@ object NetworkInspector {
                 TelephonyManager.NETWORK_TYPE_UNKNOWN
             }
 
+            @Suppress("DEPRECATION")
             when (networkType) {
                 TelephonyManager.NETWORK_TYPE_NR -> "5G/6G"
                 TelephonyManager.NETWORK_TYPE_LTE -> "4G/LTE"
