@@ -9,6 +9,7 @@ steps:
     args:
       - '-c'
       - |
+        mkdir -p androidApp
         gcloud secrets versions access latest --secret="google-services-json" > androidApp/google-services.json
 
   # 1. Compilação usando a imagem customizada do interSec
