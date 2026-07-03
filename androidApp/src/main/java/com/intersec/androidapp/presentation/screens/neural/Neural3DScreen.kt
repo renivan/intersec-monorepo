@@ -33,6 +33,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,17 +67,36 @@ fun Neural3DScreen(
         ) { viewModel.inspectNeuralLink(null) })
 
         // --- CAMADA 1: MOTOR 3D FILAMENT (SceneView Nativo) ---
+        val isLoadingModel = remember { mutableStateOf(true) }
+
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
                 SceneView(context).apply {
-                    // Carregamento manual para garantir compatibilidade com versões do Filament
+                    // Carrega o globo da NASA usando o sistema nativo
+                    this.modelLoader.loadModelAsync(
+                        fileLocation = "models/earth.glb",
+                        onResult = { model ->
+                            isLoadingModel.value = false
+                        }
+                    )
                 }
             },
             update = { view ->
-                // Atualizações via Motor Rust
+                // Atualizações via Compose state
+            },
+            onRelease = { view ->
+                view.destroy()
             }
         )
+
+        if (isLoadingModel.value) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.Cyan,
+                strokeWidth = 2.dp
+            )
+        }
 
         // --- CAMADA 2: HUD TÉCNICO (Painel Esquerdo) ---
         Column(
@@ -212,4 +232,3 @@ fun TechnicalInfoItem(label: String, value: String) {
         )
     }
 }
-
