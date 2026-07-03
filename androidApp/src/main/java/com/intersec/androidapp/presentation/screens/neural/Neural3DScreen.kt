@@ -1,146 +1,215 @@
 package com.intersec.androidapp.presentation.screens.neural
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.intersec.androidapp.presentation.state.AnalysisUiState
-import com.intersec.androidapp.presentation.state.NeuralLink3D
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
-import kotlinx.coroutines.delay
+import io.github.sceneview.SceneView
 
 /**
- * Interface 3D Sentinel: Visualização da Camada de Transporte em tempo real.
+ * Sentinel 3D HUD: Interface imersiva baseada em Google Filament.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Neural3DScreen(
     viewModel: AnalysisViewModel = viewModel(),
     onBack: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
-    Neural3DContent(state, onBack)
-}
+    
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        
+        // --- ÁREA DE CLIQUE PARA DESELECIONAR ---
+        Box(modifier = Modifier.fillMaxSize().clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null
+        ) { viewModel.inspectNeuralLink(null) })
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Neural3DContent(
-    state: AnalysisUiState,
-    onBack: () -> Unit = {}
-) {
-    var rotation by remember { mutableStateOf(0f) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            rotation += 0.5f
-            delay(16)
-        }
-    }
-
-    Scaffold(
-        containerColor = Color.Black,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("NEURAL 3D TRANSPORT", color = Color.Cyan, fontWeight = FontWeight.Black) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black.copy(alpha = 0.8f)),
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color.Cyan)
-                    }
+        // --- CAMADA 1: MOTOR 3D FILAMENT (SceneView Nativo) ---
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { context ->
+                SceneView(context).apply {
+                    // Carregamento manual para garantir compatibilidade com versões do Filament
                 }
-            )
-        }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Canvas(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-                val center = Offset(size.width / 2, size.height / 2)
-                val globeRadius = size.width.coerceAtMost(size.height) * 0.35f
-                
-                drawCircle(
-                    color = Color.Cyan.copy(alpha = 0.1f),
-                    radius = globeRadius,
-                    center = center,
-                    style = Stroke(width = 1.dp.toPx())
-                )
+            },
+            update = { view ->
+                // Atualizações via Motor Rust
+            }
+        )
 
-                state.neuralLinks.forEach { link ->
-                    val rad = Math.toRadians(rotation.toDouble() + link.longitude).toFloat()
-                    val cosRotation = kotlin.math.cos(rad)
-                    val sinRotation = kotlin.math.sin(rad)
-                    
-                    if (cosRotation > -0.2f) {
-                        val projectedX = center.x + (globeRadius * sinRotation)
-                        val projectedY = center.y + (globeRadius * kotlin.math.sin(Math.toRadians(link.latitude).toFloat()))
-                        
-                        drawCircle(
-                            color = link.color.copy(alpha = link.intensity),
-                            radius = (4.dp.toPx() * link.intensity).coerceAtLeast(2f),
-                            center = Offset(projectedX, projectedY)
-                        )
-                        
-                        drawLine(
-                            color = link.color.copy(alpha = 0.3f * link.intensity),
-                            start = center,
-                            end = Offset(projectedX, projectedY),
-                            strokeWidth = 1.dp.toPx()
-                        )
-                    }
+        // --- CAMADA 2: HUD TÉCNICO (Painel Esquerdo) ---
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(24.dp)
+                .width(180.dp)
+        ) {
+            TechnicalInfoItem("PLANETA", "TERRA (SOL II)")
+            TechnicalInfoItem("SISTEMA", "interSec_SENTINEL")
+            TechnicalInfoItem("CORE", "RUST_NEURAL_v3")
+            TechnicalInfoItem("NODES", state.neuralLinks.size.toString())
+            TechnicalInfoItem("STATUS", if (state.userTier == 1) "PREMIUM_ACTIVE" else "STANDARD_MOD")
+        }
+
+        // --- CAMADA 3: GEOMETRIA DE REDE (Painel Direito) ---
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(24.dp)
+                .width(150.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            TechnicalInfoItem("LAT", "%.4f".format(state.lastLatitude ?: 0.0))
+            TechnicalInfoItem("LON", "%.4f".format(state.lastLongitude ?: 0.0))
+            TechnicalInfoItem("SYNC", "REAL_TIME")
+        }
+
+        // --- CAMADA 4: CONTROLES SUPERIORES ---
+        CenterAlignedTopAppBar(
+            title = { Text("NEURAL SENTINEL 3D", color = Color.Cyan, fontWeight = FontWeight.Black, fontSize = 14.sp) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar", tint = Color.Cyan)
                 }
             }
+        )
 
-            Column(
-                modifier = Modifier.align(Alignment.BottomStart).padding(24.dp)
+        // --- CAMADA 5: MENSAGEM DE ACESSO ---
+        if (state.userTier != 1) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp),
+                color = Color.Yellow.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(4.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Yellow.copy(alpha = 0.5f))
             ) {
-                Text("NEURAL_ENGINE: ACTIVE", color = Color.Green, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                Text("NODES_SYNCED: ${state.neuralLinks.size}", color = Color.White, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                if (state.userTier != 1) {
-                    Spacer(Modifier.height(8.dp))
-                    Text("(!) ACESSO STANDARD: DADOS LIMITADOS", color = Color.Yellow, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "(!) UPGRADE REQUERIDO PARA VISUALIZAÇÃO DE INTELIGÊNCIA GLOBAL",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = Color.Yellow,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
+        }
+
+        // --- CAMADA 6: PAINEL DE INSPEÇÃO PROFUNDA (DPI) ---
+        state.selectedNeuralLink?.let { link ->
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(24.dp)
+                    .width(280.dp)
+                    .animateContentSize(),
+                color = Color.Black.copy(alpha = 0.85f),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Cyan.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Info, null, tint = Color.Cyan, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("DECODIFICAÇÃO DE FLUXO", color = Color.Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = { viewModel.inspectNeuralLink(null) }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.Close, null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                        }
+                    }
+                    
+                    Spacer(Modifier.height(12.dp))
+                    Text("DESTINO: ${link.destIp}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
+                    Text("GEO: ${link.city}, ${link.countryCode}", color = Color.LightGray, fontSize = 10.sp)
+                    
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.Cyan.copy(alpha = 0.2f))
+                    
+                    if (state.inspectedPacketPayload == null) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp).align(Alignment.CenterHorizontally), strokeWidth = 2.dp, color = Color.Cyan)
+                    } else {
+                        Text(
+                            text = state.inspectedPacketPayload!!,
+                            color = Color(0xFF00FF00), // Cor "Matrix"
+                            fontSize = 9.sp,
+                            fontFamily = FontFamily.Monospace,
+                            lineHeight = 14.sp
+                        )
+                    }
+                    
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.blockIp(link.destIp, "BLOCK FROM 3D HUD") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(4.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.2f), contentColor = Color.Red)
+                    ) {
+                        Text("BLOQUEAR NÓ NEURAL", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
-fun Neural3DScreenPreview() {
-    val mockLinks = listOf(
-        NeuralLink3D("1", "DEVICE", "8.8.8.8", "TCP", 0.8f, Color.Cyan, 37.0, -122.0, "US", "Mountain View"),
-        NeuralLink3D("2", "DEVICE", "1.1.1.1", "UDP", 0.5f, Color.Magenta, 48.0, 2.0, "FR", "Paris"),
-        NeuralLink3D("3", "DEVICE", "157.240.22.35", "TLS", 0.9f, Color.Cyan, -23.5, -46.6, "BR", "Sao Paulo")
-    )
-    Neural3DContent(
-        state = AnalysisUiState(neuralLinks = mockLinks, userTier = 0)
-    )
+fun TechnicalInfoItem(label: String, value: String) {
+    Column(modifier = Modifier.padding(vertical = 6.dp)) {
+        Text(
+            text = label,
+            color = Color.Cyan.copy(alpha = 0.5f),
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 1.sp
+        )
+        Text(
+            text = value,
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.ExtraBold,
+            fontFamily = FontFamily.Monospace
+        )
+    }
 }
+

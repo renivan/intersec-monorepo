@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.play.services.ads)
+    implementation(libs.sceneview)
     implementation(libs.user.messaging.platform)
     implementation(libs.billing.ktx)
     implementation(libs.gson)

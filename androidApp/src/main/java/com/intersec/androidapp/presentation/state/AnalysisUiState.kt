@@ -60,5 +60,7 @@ data class AnalysisUiState(
     // Novas dimensões: Geo-Localização e Inteligência Neural
     val lastLatitude: Double? = null,
     val lastLongitude: Double? = null,
-    val neuralLinks: List<NeuralLink3D> = emptyList()
+    val neuralLinks: List<NeuralLink3D> = emptyList(),
+    val selectedNeuralLink: NeuralLink3D? = null,
+    val inspectedPacketPayload: String? = null
 )

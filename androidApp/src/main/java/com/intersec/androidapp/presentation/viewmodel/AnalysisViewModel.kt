@@ -260,6 +260,29 @@ class AnalysisViewModel(
         }
     }
 
+    /**
+     * Inicia a inspeção profunda de um nó no mapa 3D.
+     * Recupera o payload e detalhes técnicos do transporte.
+     */
+    fun inspectNeuralLink(link: com.intersec.androidapp.presentation.state.NeuralLink3D?) {
+        _uiState.update { it.copy(selectedNeuralLink = link, inspectedPacketPayload = null) }
+        
+        link?.let {
+            addLog("Inspecionando conexão neural: ${link.destIp} [${link.protocol}]")
+            
+            // Simulação de decodificação profunda para a UI 3D
+            // Na FASE FINAL, isso buscará o payload real via repository.getPacketDetail()
+            viewModelScope.launch {
+                delay(500.milliseconds)
+                val mockPayload = "HEX: 45 00 00 3c 1c 46 40 00 40 06 ...\n" +
+                                 "DATA: GET /api/v1/intelligence HTTP/1.1\n" +
+                                 "USER-AGENT: interSec-Guardian/3.0\n" +
+                                 "STATUS: ENCRYPTED_TLS_V1.3"
+                _uiState.update { it.copy(inspectedPacketPayload = mockPayload) }
+            }
+        }
+    }
+
     fun removeFirewallRule(rule: com.intersec.androidapp.presentation.state.FirewallRule) {
         viewModelScope.launch {
             securitySettings.removeFirewallRule("${rule.target}|${rule.reason}")
