@@ -3,17 +3,16 @@
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.intersec.androidapp.app.MainApplication
+import com.intersec.androidapp.core.network.NetworkInspector
+import com.intersec.androidapp.core.network.ThreatIntelManager
 import com.intersec.androidapp.core.storage.SecuritySettingsManager
 import com.intersec.androidapp.di.AppBootstrap
 import com.intersec.androidapp.domain.repository.CoreAnalysisRepository
 import com.intersec.androidapp.presentation.state.AnalysisUiState
 import com.intersec.androidapp.presentation.state.ImportLogEntry
 import com.intersec.androidapp.presentation.state.LogLevel
-import com.intersec.androidapp.core.network.ThreatIntelManager
-import com.intersec.androidapp.core.network.NetworkInspector
-import com.intersec.androidapp.core.ads.AdManager
-import com.intersec.androidapp.ui.theme.AppThemeType
 import com.intersec.androidapp.presentation.state.NetworkState
+import com.intersec.androidapp.ui.theme.AppThemeType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,11 +25,15 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * ViewModel principal unificado com suporte a log detalhado de importação e configurações de segurança.
+ * ViewModel principal unificado (Hardened v3.0).
+ * Integra Motor Neural Rust, Geo-Localização e Segurança Premium.
  */
 class AnalysisViewModel(
     private val repository: CoreAnalysisRepository = AppBootstrap.coreAnalysisRepository,
     private val securitySettings: SecuritySettingsManager = MainApplication.appModule.securitySettingsManager,
+    private val locationTracker: com.intersec.androidapp.core.location.LocationTracker = MainApplication.appModule.locationTracker,
+    private val tierManager: com.intersec.androidapp.core.auth.TierManager = MainApplication.appModule.tierManager,
+    private val neuralEngine: com.intersec.androidapp.core.neural.NeuralCoreEngine = MainApplication.appModule.neuralCoreEngine
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AnalysisUiState())
@@ -40,6 +43,23 @@ class AnalysisViewModel(
     init {
         startPolling()
         observeSecuritySettings()
+        observeLocation()
+        observeNeuralStream()
+        tierManager.syncAndValidate()
+    }
+
+    private fun observeLocation() {
+        locationTracker.currentLocation.onEach { location ->
+            location?.let {
+                _uiState.update { it.copy(lastLatitude = location.latitude, lastLongitude = location.longitude) }
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun observeNeuralStream() {
+        neuralEngine.neuralStream.onEach { links ->
+            _uiState.update { it.copy(neuralLinks = links) }
+        }.launchIn(viewModelScope)
     }
 
     private fun observeSecuritySettings() {
@@ -68,12 +88,19 @@ class AnalysisViewModel(
             _uiState.update { it.copy(themeType = theme) }
         }.launchIn(viewModelScope)
 
-        securitySettings.rewardedMinutesMonth.onEach { mins ->
-            _uiState.update { it.copy(rewardedMinutesMonth = mins) }
-        }.launchIn(viewModelScope)
-
         securitySettings.isDarkMode.onEach { isDark ->
             _uiState.update { it.copy(isDarkMode = isDark) }
+        }.launchIn(viewModelScope)
+
+        securitySettings.firewallRules.onEach { rulesSet ->
+            val rules = rulesSet.map {
+                val parts = it.split("|")
+                com.intersec.androidapp.presentation.state.FirewallRule(
+                    target = parts.getOrNull(0) ?: "",
+                    reason = parts.getOrNull(1) ?: "MANUAL BLOCK"
+                )
+            }
+            _uiState.update { it.copy(firewallRules = rules) }
         }.launchIn(viewModelScope)
     }
 
@@ -84,57 +111,81 @@ class AnalysisViewModel(
                 level = state.securityLevel,
                 smartShield = state.isShieldActive,
                 killSwitch = state.isKillSwitchOn
-            ).onFailure { e ->
-                addLog("Aviso: Falha ao sincronizar configurações com o motor: ${e.message}", LogLevel.WARNING)
-            }
+            )
         }
     }
 
     fun toggleSmartShield(active: Boolean) {
-        viewModelScope.launch {
-            securitySettings.setSmartShield(active)
-        }
+        viewModelScope.launch { securitySettings.setSmartShield(active) }
     }
 
     fun toggleKillSwitch(active: Boolean) {
-        viewModelScope.launch {
-            securitySettings.setKillSwitch(active)
-        }
+        viewModelScope.launch { securitySettings.setKillSwitch(active) }
     }
 
     fun updateSecurityLevel(level: Int) {
-        viewModelScope.launch {
-            securitySettings.setSecurityLevel(level)
-        }
+        viewModelScope.launch { securitySettings.setSecurityLevel(level) }
     }
 
     fun upgradeToPro() {
         viewModelScope.launch {
-            securitySettings.setUserTier(1)
+            tierManager.performUpgrade()
+            addLog("Upgrade: Acesso PREMIUM ativado e motor validado.", LogLevel.SUCCESS)
         }
+    }
+
+    fun startRealtimeLocation() {
+        locationTracker.startTracking()
+    }
+
+    fun stopRealtimeLocation() {
+        locationTracker.stopTracking()
     }
 
     fun updateTheme(theme: AppThemeType) {
-        viewModelScope.launch {
-            securitySettings.setThemeType(theme.id)
-        }
+        viewModelScope.launch { securitySettings.setThemeType(theme.id) }
     }
 
     fun toggleDarkMode(isDark: Boolean) {
-        viewModelScope.launch {
-            securitySettings.setDarkMode(isDark)
-        }
+        viewModelScope.launch { securitySettings.setDarkMode(isDark) }
+    }
+
+    fun setShowAdRewardDialog(show: Boolean) {
+        _uiState.update { it.copy(showAdRewardDialog = show) }
     }
 
     fun addRewardTime() {
         viewModelScope.launch {
             val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH)
             securitySettings.addRewardedMinute(currentMonth)
+            addLog("Recompensa: Tempo adicional de monitoramento PREMIUM desbloqueado.", LogLevel.SUCCESS)
         }
     }
 
-    fun setShowAdRewardDialog(show: Boolean) {
-        _uiState.update { it.copy(showAdRewardDialog = show) }
+    fun openCapture(path: String) {
+        addLog("Iniciando processamento neural de arquivo: $path")
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            repository.openCapture(path, System.currentTimeMillis() * 1000L).fold(
+                onSuccess = { snapshot ->
+                    addLog("Sessão carregada: ${snapshot.sessionId}", LogLevel.SUCCESS)
+                    refreshActiveSession()
+                },
+                onFailure = { e ->
+                    addLog("Falha ao abrir captura: ${e.message}", LogLevel.ERROR)
+                    _uiState.update { it.copy(isLoading = false, error = e.message) }
+                }
+            )
+        }
+    }
+
+    fun clearSession() {
+        addLog("Sessão terminada e memória limpa.")
+        _uiState.value = AnalysisUiState(userTier = _uiState.value.userTier)
+    }
+
+    fun clearLogs() {
+        _uiState.update { it.copy(importLogs = emptyList()) }
     }
 
     private fun startPolling() {
@@ -144,7 +195,6 @@ class AnalysisViewModel(
                 updateNetworkStatus()
                 delay(1000.milliseconds)
                 val state = _uiState.value
-                // Só atualiza se houver uma sessão ativa e não estiver em processo de carga inicial
                 if ((state.session != null && !state.isLoading)) {
                     refreshActiveSession()
                 }
@@ -153,75 +203,30 @@ class AnalysisViewModel(
     }
 
     private fun updateNetworkStatus() {
-        val info = NetworkInspector.getActiveNetworkInfo(MainApplication.instance)
-        _uiState.update { 
-            it.copy(
-                networkState = NetworkState(
-                    interfaceName = info.interfaceName,
-                    typeName = info.typeName,
-                    details = info.details,
-                    isConnected = info.isConnected
+        try {
+            val context = MainApplication.instance
+            val info = NetworkInspector.getActiveNetworkInfo(context)
+            _uiState.update { 
+                it.copy(
+                    networkState = NetworkState(
+                        interfaceName = info.interfaceName,
+                        typeName = info.typeName,
+                        details = info.details,
+                        isConnected = info.isConnected
+                    )
                 )
-            )
-        }
+            }
+        } catch (_: Exception) {}
     }
 
     fun addLog(message: String, level: LogLevel = LogLevel.INFO) {
         _uiState.update { it.copy(importLogs = it.importLogs + ImportLogEntry(message = message, level = level)) }
     }
 
-    fun openCapture(path: String) {
-        addLog("Iniciando importação do arquivo: $path")
-        
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            val now = System.currentTimeMillis() * 1000L
-
-            addLog("Chamando motor nativo (JNI)...")
-            repository.openCapture(path, now).fold(
-                onSuccess = { snapshot ->
-                    addLog("sucesso nativo! Sessão criada: ${snapshot.sessionId}", LogLevel.SUCCESS)
-                    addLog("Métricas iniciais: ${snapshot.totalPackets} pacotes, ${snapshot.totalFlows} fluxos.")
-                    
-                    val sessionDto = com.intersec.androidapp.data.model.dto.SessionDto(
-                        sessionId = snapshot.sessionId,
-                        sourceName = snapshot.sourceName,
-                        packetCount = snapshot.totalPackets,
-                        flowCount = snapshot.totalFlows
-                    )
-                    
-                    // Carregar Overview Real
-                    repository.getOverview().fold(
-                        onSuccess = { overview ->
-                            _uiState.update { it.copy(isLoading = false, session = sessionDto, overview = overview) }
-                        },
-                        onFailure = {
-                            _uiState.update { it.copy(isLoading = false, session = sessionDto) }
-                        }
-                    )
-                },
-                onFailure = { e ->
-                    val errorMsg = e.message ?: "Erro desconhecido"
-                    addLog("FALHA NATIVA: $errorMsg", LogLevel.ERROR)
-                    _uiState.update { it.copy(isLoading = false, session = null, error = errorMsg) }
-                }
-            )
-        }
-    }
-
-    fun clearLogs() {
-        _uiState.update { it.copy(importLogs = emptyList()) }
-    }
-
     fun refreshActiveSession() {
-        addLog("Atualizando estado da sessão...")
         viewModelScope.launch {
-            val startTime = System.nanoTime()
             repository.snapshotActive().fold(
                 onSuccess = { snapshot ->
-                    val snapshotTime = (System.nanoTime() - startTime) / 1_000_000.0
-                    addLog("Snapshot obtido em ${"%.2f".format(snapshotTime)}ms")
-                    
                     val sessionDto = com.intersec.androidapp.data.model.dto.SessionDto(
                         sessionId = snapshot.sessionId,
                         sourceName = snapshot.sourceName,
@@ -229,43 +234,35 @@ class AnalysisViewModel(
                         flowCount = snapshot.totalFlows
                     )
                     
-                    // Carregar Overview Real
-                    val ovStart = System.nanoTime()
                     repository.getOverview().fold(
                         onSuccess = { overview ->
-                            val ovTime = (System.nanoTime() - ovStart) / 1_000_000.0
-                            addLog("Overview real carregado em ${"%.2f".format(ovTime)}ms", LogLevel.SUCCESS)
+                            // Alimenta o Motor Neural Rust com dados reais de transporte
+                            overview.topCommunications.forEach { comm ->
+                                val lat = _uiState.value.lastLatitude ?: 0.0
+                                val lon = _uiState.value.lastLongitude ?: 0.0
+                                neuralEngine.processConnection(comm.destination, "TCP", comm.volumeBytes)
+                            }
                             _uiState.update { it.copy(session = sessionDto, overview = overview) }
                         },
-                        onFailure = { e ->
-                            addLog("Aviso: Falha ao carregar overview real: ${e.message}", LogLevel.WARNING)
-                            _uiState.update { it.copy(session = sessionDto) }
-                        }
+                        onFailure = { _uiState.update { it.copy(session = sessionDto) } }
                     )
                 },
-                onFailure = { e ->
-                    addLog("Erro ao obter snapshot: ${e.message}", LogLevel.WARNING)
-                }
+                onFailure = {}
             )
         }
-    }
-
-    fun clearSession() {
-        addLog("Sessão limpa pelo usuário.")
-        _uiState.value = AnalysisUiState()
     }
 
     fun blockIp(ip: String, reason: String = "MANUAL BLOCK") {
-        val newRule = com.intersec.androidapp.presentation.state.FirewallRule(target = ip, reason = reason)
-        _uiState.update { it.copy(firewallRules = it.firewallRules + newRule) }
-        addLog("Firewall: IP $ip bloqueado. Motivo: $reason", LogLevel.WARNING)
-        // TODO: Persistir e sincronizar com o motor nativo
+        if (_uiState.value.userTier != 1) return
+        viewModelScope.launch {
+            securitySettings.addFirewallRule(ip, reason)
+            addLog("Firewall: IP $ip bloqueado.", LogLevel.WARNING)
+        }
     }
 
     fun removeFirewallRule(rule: com.intersec.androidapp.presentation.state.FirewallRule) {
-        _uiState.update { it.copy(firewallRules = it.firewallRules - rule) }
-        addLog("Firewall: Regra para ${rule.target} removida.", LogLevel.INFO)
+        viewModelScope.launch {
+            securitySettings.removeFirewallRule("${rule.target}|${rule.reason}")
+        }
     }
-
 }
-

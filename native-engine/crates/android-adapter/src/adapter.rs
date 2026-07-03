@@ -123,6 +123,14 @@ impl AndroidAdapter {
     pub fn simulate_attack(&self, data: Vec<u8>) -> String {
         self.ffi.simulate_attack(data)
     }
+
+    pub fn get_neural_snapshot(&self) -> Vec<neural_intelligence::NeuralLink3D> {
+        self.ffi.get_neural_snapshot()
+    }
+
+    pub fn push_neural_event(&mut self, ip: &str, proto: &str, lat: f64, lon: f64, volume: u64) {
+        self.ffi.push_neural_event(ip, proto, lat, lon, volume);
+    }
 }
 
 fn map_required<T>(response: FfiResponse<T>) -> Result<T, AndroidAdapterError> {

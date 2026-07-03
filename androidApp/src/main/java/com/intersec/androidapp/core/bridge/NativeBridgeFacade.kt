@@ -73,5 +73,14 @@ class NativeBridgeFacade(
             NativeBridgeResult(success = false, error = e.message)
         }
     }
+
+    fun activatePremiumFeatures(token: String): NativeBridgeResult<Boolean> {
+        return try {
+            val result = client.activatePremiumFeatures(token)
+            NativeBridgeResult(success = true, data = result)
+        } catch (e: Exception) {
+            NativeBridgeResult(success = false, error = e.message)
+        }
+    }
 }
 

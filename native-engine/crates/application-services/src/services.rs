@@ -15,6 +15,7 @@ pub struct ApplicationServices<R: StorageRepository> {
     pub sessions: Arc<Mutex<SessionManager>>,
     pub storage: R,
     pub security_settings: Arc<Mutex<SecuritySettings>>,
+    pub neural_engine: Arc<Mutex<neural_intelligence::NeuralIntelligenceEngine>>,
 }
 
 impl<R: StorageRepository> ApplicationServices<R> {
@@ -23,6 +24,7 @@ impl<R: StorageRepository> ApplicationServices<R> {
             sessions: Arc::new(Mutex::new(SessionManager::new())),
             storage,
             security_settings: Arc::new(Mutex::new(SecuritySettings::default())),
+            neural_engine: Arc::new(Mutex::new(neural_intelligence::NeuralIntelligenceEngine::new())),
         }
     }
 
@@ -192,5 +194,13 @@ impl<R: StorageRepository> ApplicationServices<R> {
 
     pub fn push_live_packet(&mut self, packet: core_types::ParsedPacket) -> Result<(), ApplicationServicesError> {
         Ok(self.sessions.lock().unwrap().push_packet(packet)?)
+    }
+
+    pub fn get_neural_snapshot(&self) -> Vec<neural_intelligence::NeuralLink3D> {
+        self.neural_engine.lock().unwrap().get_neural_snapshot()
+    }
+
+    pub fn push_neural_event(&self, ip: &str, proto: &str, lat: f64, lon: f64, volume: u64) {
+        self.neural_engine.lock().unwrap().push_transport_event(ip, proto, lat, lon, volume);
     }
 }

@@ -108,4 +108,12 @@ impl MobileBridge {
     pub fn simulate_attack(&self, data: Vec<u8>) -> String {
         self.facade.simulate_attack(data)
     }
+
+    pub fn get_neural_snapshot(&self) -> Vec<neural_intelligence::NeuralLink3D> {
+        self.facade.get_neural_snapshot()
+    }
+
+    pub fn push_neural_event(&mut self, ip: &str, proto: &str, lat: f64, lon: f64, volume: u64) {
+        self.facade.push_neural_event(ip, proto, lat, lon, volume);
+    }
 }

@@ -11,7 +11,6 @@ import java.util.Locale
 
 /**
  * Representa uma entrada individual no log de importação.
- * Usando SimpleDateFormat para compatibilidade com API 24+.
  */
 data class ImportLogEntry(
     val timestamp: String = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date()),
@@ -36,7 +35,7 @@ data class NetworkState(
 )
 
 /**
- * Estado unificado com suporte a rastreamento de logs.
+ * Estado unificado com suporte a rastreamento de logs e inteligência neural 3D.
  */
 data class AnalysisUiState(
     val isLoading: Boolean = false,
@@ -56,5 +55,10 @@ data class AnalysisUiState(
     val rewardedMinutesMonth: Int = 0,
     val showAdRewardDialog: Boolean = false,
     val firewallRules: List<FirewallRule> = emptyList(),
-    val networkState: NetworkState = NetworkState()
+    val networkState: NetworkState = NetworkState(),
+    
+    // Novas dimensões: Geo-Localização e Inteligência Neural
+    val lastLatitude: Double? = null,
+    val lastLongitude: Double? = null,
+    val neuralLinks: List<NeuralLink3D> = emptyList()
 )

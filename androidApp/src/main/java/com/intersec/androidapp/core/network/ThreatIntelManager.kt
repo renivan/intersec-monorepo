@@ -1,43 +1,46 @@
 ﻿package com.intersec.androidapp.core.network
 
 import android.util.Log
-import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.firestore.FirebaseFirestore
 import com.intersec.androidapp.core.bridge.NativeBridgeClient
-import java.io.File
 
 /**
- * ThreatIntelManager: Gerencia a sincronização de bases de dados de ameaças mundiais.
- * As mesmas bases usadas por Cisco Talos e Emerging Threats.
+ * ThreatIntelManager: Gerencia a sincronização de bases de dados de ameaças via Firestore.
+ * Conecta-se ao repositório global e blinda o motor nativo em tempo real.
  */
 object ThreatIntelManager {
     private const val TAG = "interSec_INTEL"
-    private val storage = FirebaseStorage.getInstance()
-    private val bridge = NativeBridgeClient()
+    var isTestEnvironment: Boolean = false
 
     /**
-     * Sincroniza a "Blacklist de Elite" do Firebase para o motor Native.
-     * @param isPro Se true, baixa a base completa em tempo real. Se false, base padrão.
+     * Sincroniza a "Blacklist" do Firestore para o motor Native.
+     * @param isPro Se true, baixa inteligência avançada.
      */
     fun syncThreatFeeds(isPro: Boolean = false) {
-        val feedPath = if (isPro) "intel/global_threat_pro.bin" else "intel/global_threat_free.bin"
-        val localFile = File.createTempFile("threat_intel", ".bin")
+        try {
+            val db = FirebaseFirestore.getInstance()
+            val bridge = NativeBridgeClient()
+            
+            Log.d(TAG, "sincronizando feeds de ameaças (Premium=$isPro)...")
 
-        Log.d(TAG, "Iniciando download de Inteligência Global: $feedPath")
-
-        storage.reference.child(feedPath).getFile(localFile)
-            .addOnSuccessListener {
-                val bytes = localFile.readBytes()
-                Log.i(TAG, "Sucesso: ${bytes.size} bytes de inteligência baixados.")
-                
-                // Entrega a blindagem diretamente para o motor nativo Native
-                val success = bridge.updateThreatDatabase(bytes)
-                if (success) {
-                    Log.i(TAG, "Motor Native: Blindagem Industrial ATUALIZADA.")
+            db.collection("threat_intel")
+                .get()
+                .addOnSuccessListener { documents ->
+                    val ipList = documents.mapNotNull { it.getString("ip") }
+                    if (ipList.isNotEmpty()) {
+                        // Injeção direta no motor nativo interSec
+                        val blob = ipList.joinToString(",").toByteArray()
+                        val success = bridge.updateThreatDatabase(blob)
+                        if (success) {
+                            Log.i(TAG, "Motor nativo blindado com ${ipList.size} assinaturas globais.")
+                        }
+                    }
                 }
-            }
-            .addOnFailureListener {
-                Log.w(TAG, "Falha ao baixar inteligência global: ${it.message}. Usando base local offline.")
-            }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Falha na sincronização de inteligência: ${e.message}")
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro crítico de inicialização de inteligência: ${e.message}")
+        }
     }
 }
-

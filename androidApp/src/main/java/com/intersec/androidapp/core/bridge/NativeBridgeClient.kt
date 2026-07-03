@@ -114,6 +114,11 @@ class NativeBridgeClient(
         return Native.updateSecuritySettingsNative(level, smartShield, killSwitch)
     }
 
+    fun activatePremiumFeatures(token: String): Boolean {
+        loader.ensureLoaded()
+        return Native.activatePremiumFeaturesNative(token)
+    }
+
     private object Native {
         @JvmStatic
         @FastNative
@@ -178,6 +183,9 @@ class NativeBridgeClient(
 
         @JvmStatic
         external fun updateSecuritySettingsNative(level: Int, smartShield: Boolean, killSwitch: Boolean): Boolean
+
+        @JvmStatic
+        external fun activatePremiumFeaturesNative(token: String): Boolean
     }
 }
 

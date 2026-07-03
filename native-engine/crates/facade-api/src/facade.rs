@@ -100,4 +100,12 @@ impl FacadeApi {
     pub fn simulate_attack(&self, data: Vec<u8>) -> String {
         self.app.simulate_attack_verdict(data)
     }
+
+    pub fn get_neural_snapshot(&self) -> Vec<neural_intelligence::NeuralLink3D> {
+        self.app.get_neural_snapshot()
+    }
+
+    pub fn push_neural_event(&mut self, ip: &str, proto: &str, lat: f64, lon: f64, volume: u64) {
+        self.app.push_neural_event(ip, proto, lat, lon, volume);
+    }
 }

@@ -150,6 +150,33 @@ pub extern "system" fn Java_com_intersec_androidapp_integration_Native_NativeBri
     env.new_string(output).unwrap().into_raw()
 }
 
+#[no_mangle]
+pub extern "system" fn Java_com_intersec_androidapp_core_bridge_NativeBridgeClient_00024Native_getNeuralSnapshotNative(
+    mut env: JNIEnv,
+    _class: JClass,
+) -> jstring {
+    let adapter = ADAPTER.lock().unwrap();
+    let snapshot = adapter.get_neural_snapshot();
+    let output = serde_json::to_string(&snapshot).unwrap_or_default();
+    env.new_string(output).unwrap().into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_intersec_androidapp_core_bridge_NativeBridgeClient_00024Native_pushNeuralEventNative(
+    mut env: JNIEnv,
+    _class: JClass,
+    ip: JString,
+    proto: JString,
+    lat: f64,
+    lon: f64,
+    volume: i64,
+) {
+    let ip_str: String = env.get_string(&ip).unwrap().into();
+    let proto_str: String = env.get_string(&proto).unwrap().into();
+    let mut adapter = ADAPTER.lock().unwrap();
+    adapter.push_neural_event(&ip_str, &proto_str, lat, lon, volume as u64);
+}
+
 fn opt_string(env: &mut JNIEnv, s: JString) -> Option<String> {
     if s.is_null() {
         None

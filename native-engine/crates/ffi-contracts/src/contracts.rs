@@ -123,4 +123,12 @@ impl FfiContracts {
     pub fn simulate_attack(&self, data: Vec<u8>) -> String {
         self.bridge.simulate_attack(data)
     }
+
+    pub fn get_neural_snapshot(&self) -> Vec<neural_intelligence::NeuralLink3D> {
+        self.bridge.get_neural_snapshot()
+    }
+
+    pub fn push_neural_event(&mut self, ip: &str, proto: &str, lat: f64, lon: f64, volume: u64) {
+        self.bridge.push_neural_event(ip, proto, lat, lon, volume);
+    }
 }
