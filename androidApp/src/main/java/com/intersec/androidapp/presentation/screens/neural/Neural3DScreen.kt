@@ -99,7 +99,7 @@ fun Neural3DContent(
     // Estados de Controle 3D
     var rotationY by remember { mutableStateOf(0f) }
     var rotationX by remember { mutableStateOf(0f) }
-    var zoomScale by remember { mutableStateOf(0.29f) }
+    var zoomScale by remember { mutableStateOf(0.4f) } // Aumentado de 0.29f para 0.4f para visibilidade inicial
 
     // Atualização do Relógio Sentinel
     LaunchedEffect(Unit) {
@@ -132,7 +132,7 @@ fun Neural3DContent(
                     modelInstance = instance,
                     scale = Scale(zoomScale),
                     rotation = Rotation(x = rotationX, y = rotationY),
-                    position = Position(z = -1.0f) // Recua um pouco para o zoom ser mais visível
+                    position = Position(z = 0.0f) // Resetado para 0.0f para garantir que não suma da câmera
                 )
             }
         }
