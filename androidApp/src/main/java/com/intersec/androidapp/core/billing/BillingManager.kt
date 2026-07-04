@@ -89,7 +89,7 @@ class BillingManager(
         billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
             override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
                 val productDetailsList = result.productDetailsList
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && !productDetailsList.isNullOrEmpty()) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
                     val details = productDetailsList[0]
                     val offers = details.subscriptionOfferDetails
                     var offerToken = ""

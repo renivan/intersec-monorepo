@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.mutableStateListOf
 import com.intersec.androidapp.presentation.state.NeuralLink3D
 import androidx.compose.ui.graphics.Color
@@ -50,11 +51,7 @@ class Neural3DTestActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         val filter = IntentFilter("SENTINEL_INJECT_NODE")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(cliReceiver, filter, Context.RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(cliReceiver, filter)
-        }
+        ContextCompat.registerReceiver(this, cliReceiver, filter, ContextCompat.RECEIVER_EXPORTED)
 
         setContent {
             Neural3DContent(
