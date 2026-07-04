@@ -16,12 +16,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig = signingConfigs.getByName("debug")
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            isShrinkResources = false
             // Removendo referência a arquivo que causa erro no GCloud se não for achado
             // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
