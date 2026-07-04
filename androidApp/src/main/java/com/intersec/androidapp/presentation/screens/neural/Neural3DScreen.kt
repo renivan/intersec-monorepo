@@ -4,37 +4,14 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,21 +27,29 @@ import io.github.sceneview.SceneView
 /**
  * Sentinel 3D HUD: Interface imersiva baseada em Google Filament.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Neural3DScreen(
     viewModel: AnalysisViewModel = viewModel(),
     onBack: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
-    
+    Neural3DContent(state, onBack, viewModel)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Neural3DContent(
+    state: com.intersec.androidapp.presentation.state.AnalysisUiState,
+    onBack: () -> Unit,
+    viewModel: AnalysisViewModel? = null
+) {
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         
         // --- ÁREA DE CLIQUE PARA DESELECIONAR ---
         Box(modifier = Modifier.fillMaxSize().clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null
-        ) { viewModel.inspectNeuralLink(null) })
+        ) { viewModel?.inspectNeuralLink(null) })
 
         // --- CAMADA 1: MOTOR 3D FILAMENT (SceneView Nativo) ---
         val isLoadingModel = remember { mutableStateOf(true) }
@@ -73,21 +58,15 @@ fun Neural3DScreen(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
                 SceneView(context).apply {
-                    // Carrega o globo da NASA usando o sistema nativo
                     this.modelLoader.loadModelAsync(
                         fileLocation = "models/earth.glb",
-                        onResult = { model ->
+                        onResult = { _ ->
                             isLoadingModel.value = false
                         }
                     )
                 }
             },
-            update = { view ->
-                // Atualizações via Compose state
-            },
-            onRelease = { view ->
-                view.destroy()
-            }
+            update = { _ -> }
         )
 
         if (isLoadingModel.value) {
@@ -175,7 +154,7 @@ fun Neural3DScreen(
                         Spacer(Modifier.width(8.dp))
                         Text("DECODIFICAÇÃO DE FLUXO", color = Color.Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.weight(1f))
-                        IconButton(onClick = { viewModel.inspectNeuralLink(null) }, modifier = Modifier.size(24.dp)) {
+                        IconButton(onClick = { viewModel?.inspectNeuralLink(null) }, modifier = Modifier.size(24.dp)) {
                             Icon(Icons.Default.Close, null, tint = Color.Gray, modifier = Modifier.size(14.dp))
                         }
                     }
@@ -200,7 +179,7 @@ fun Neural3DScreen(
                     
                     Spacer(Modifier.height(16.dp))
                     Button(
-                        onClick = { viewModel.blockIp(link.destIp, "BLOCK FROM 3D HUD") },
+                        onClick = { viewModel?.blockIp(link.destIp, "BLOCK FROM 3D HUD") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.2f), contentColor = Color.Red)

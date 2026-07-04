@@ -6,14 +6,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.intersec.androidapp.di.AppBootstrap
 import com.intersec.androidapp.presentation.screens.capture.CaptureRealtimeScreen
-import com.intersec.androidapp.presentation.screens.capture.MissionControlScreen
 import com.intersec.androidapp.presentation.screens.capture.ImportLogScreen
+import com.intersec.androidapp.presentation.screens.capture.MissionControlScreen
 import com.intersec.androidapp.presentation.screens.diagnostic.DiagnosticScreen
 import com.intersec.androidapp.presentation.screens.flow.FlowDetailScreen
 import com.intersec.androidapp.presentation.screens.flow.FlowScreen
 import com.intersec.androidapp.presentation.screens.history.HistoryScreen
+import com.intersec.androidapp.presentation.screens.neural.Neural3DScreen
 import com.intersec.androidapp.presentation.screens.overview.CaptureOverviewScreen
-import com.intersec.androidapp.presentation.screens.overview.GeographicMapScreen
 import com.intersec.androidapp.presentation.screens.packet.PacketDetailScreen
 import com.intersec.androidapp.presentation.screens.packet.PacketScreen
 import com.intersec.androidapp.presentation.screens.security.SecurityReportScreen
@@ -62,7 +62,8 @@ fun AppNavGraph(
         }
 
         composable(AppRoutes.GEO_MAP) {
-            GeographicMapScreen(
+            Neural3DScreen(
+                viewModel = analysisViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
