@@ -45,8 +45,11 @@ fun InterSecApp(analysisViewModel: AnalysisViewModel = viewModel()) {
         DrawerItem("Diagnóstico", AppRoutes.DIAGNOSTIC, Icons.Default.Build)
     )
 
+    val gesturesEnabled = currentRoute != AppRoutes.GEO_MAP
+
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = gesturesEnabled,
         drawerContent = {
             ModalDrawerSheet(
                 drawerContainerColor = MaterialTheme.colorScheme.background,
@@ -97,26 +100,33 @@ fun InterSecApp(analysisViewModel: AnalysisViewModel = viewModel()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("INTERSEC ANALYZER", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black, fontFamily = androidx.compose.ui.text.font.FontFamily.Default) },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                if (currentRoute != AppRoutes.GEO_MAP) {
+                    CenterAlignedTopAppBar(
+                        title = { Text("INTERSEC ANALYZER", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black, fontFamily = androidx.compose.ui.text.font.FontFamily.Default) },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.background
+                        ),
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { analysisViewModel.refreshActiveSession() }) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.primary)
+                            }
                         }
-                    },
-                    actions = {
-                        IconButton(onClick = { analysisViewModel.refreshActiveSession() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                )
+                    )
+                }
             }
         ) { padding ->
+            val contentModifier = if (currentRoute == AppRoutes.GEO_MAP) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier.padding(padding)
+            }
             Surface(
-                modifier = Modifier.padding(padding),
+                modifier = contentModifier,
                 color = MaterialTheme.colorScheme.background
             ) {
                 AppNavGraph(navController, analysisViewModel)
