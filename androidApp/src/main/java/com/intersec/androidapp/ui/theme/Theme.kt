@@ -1,17 +1,28 @@
 package com.intersec.androidapp.ui.theme
 
 import android.app.Activity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
-// --- ESCURO (DARK) ---
+// --- Escuro (DARK) ---
 
 private val CyberDarkColorScheme = darkColorScheme(
     primary = OliveGreen,
@@ -19,7 +30,7 @@ private val CyberDarkColorScheme = darkColorScheme(
     secondary = SoftGreen,
     background = CyberBlack,
     surface = CyberGray,
-    error = Color(0xFFCF6679)
+    error = Color(0xFFD00E2F)
 )
 
 private val TechMasterDarkColorScheme = darkColorScheme(
@@ -47,7 +58,9 @@ private val StudioDarkColorScheme = darkColorScheme(
     background = StudioDarkBackground,
     surface = StudioDarkSurface,
     error = StudioDarkError,
-    onSurface = StudioDarkText
+    onSecondary = Color.White,
+    onSurface = StudioDarkText,
+    onBackground = StudioDarkText
 )
 
 // --- CLARO (LIGHT) ---
@@ -120,7 +133,7 @@ fun InterSecTheme(
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
             
-            // Lógica moderna para barra de status (sem avisos de depreciação)
+            // Lógica moderna para barras de sistema (sem avisos de depreciação)
             window.statusBarColor = colorScheme.background.toArgb()
             window.navigationBarColor = colorScheme.background.toArgb()
             insetsController.isAppearanceLightStatusBars = !isDarkMode
@@ -133,4 +146,79 @@ fun InterSecTheme(
         typography = AppTypography,
         content = content
     )
+}
+
+@Preview(name = "Cyber Dark", showBackground = true)
+@Composable
+fun InterSecThemeCyberDarkPreview() {
+    InterSecTheme(themeType = AppThemeType.CYBER_INTERSECURITY, isDarkMode = true) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ThemePreviewContent("Cyber Dark")
+        }
+    }
+}
+
+@Preview(name = "Tech Master Light", showBackground = true)
+@Composable
+fun InterSecThemeTechMasterLightPreview() {
+    InterSecTheme(themeType = AppThemeType.TECH_MASTER, isDarkMode = false) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ThemePreviewContent("Tech Master Light")
+        }
+    }
+}
+
+@Preview(name = "Minimal Orange Dark", showBackground = true)
+@Composable
+fun InterSecThemeMinimalOrangeDarkPreview() {
+    InterSecTheme(themeType = AppThemeType.MINIMAL_ORANGE, isDarkMode = true) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ThemePreviewContent("Minimal Orange Dark")
+        }
+    }
+}
+
+@Preview(name = "Dark Night", showBackground = true)
+@Composable
+fun InterSecThemeDarkNightPreview() {
+    InterSecTheme(themeType = AppThemeType.DARK_NIGHT, isDarkMode = true) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ThemePreviewContent("Dark Night")
+        }
+    }
+}
+
+@Composable
+private fun ThemePreviewContent(label: String) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Button(onClick = {}) {
+            Text("Primary Button")
+        }
+        OutlinedTextField(
+            value = "Sample Text",
+            onValueChange = {},
+            label = { Text("Label") },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
