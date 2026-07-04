@@ -50,7 +50,7 @@ class Neural3DTestActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         val filter = IntentFilter("SENTINEL_INJECT_NODE")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(cliReceiver, filter, Context.RECEIVER_EXPORTED)
         } else {
             registerReceiver(cliReceiver, filter)

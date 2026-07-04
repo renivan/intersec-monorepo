@@ -63,7 +63,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 import io.github.sceneview.SceneView
+import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Scale
 import io.github.sceneview.node.ModelNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelInstance
@@ -71,6 +73,7 @@ import io.github.sceneview.rememberModelLoader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Sentinel 3D HUD: Interface imersiva baseada em Google Filament.
@@ -103,7 +106,7 @@ fun Neural3DContent(
     LaunchedEffect(Unit) {
         while (true) {
             currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-            kotlinx.coroutines.delay(1000)
+            kotlinx.coroutines.delay(1.seconds)
         }
     }
 
@@ -128,8 +131,9 @@ fun Neural3DContent(
             modelInstance?.let { instance ->
                 ModelNode(
                     modelInstance = instance,
-                    scaleToUnits = zoomScale,
-                    rotation = Rotation(x = rotationX, y = rotationY)
+                    scale = Scale(zoomScale),
+                    rotation = Rotation(x = rotationX, y = rotationY),
+                    position = Position(z = -1.0f) // Recua um pouco para o zoom ser mais visível
                 )
             }
         }
@@ -190,7 +194,7 @@ fun Neural3DContent(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 40.dp),
+                .padding(horizontal = 20.dp, vertical = 70.dp), // Aumentado de 40 para 70 para subir os controles
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
@@ -260,7 +264,7 @@ fun Neural3DContent(
                     if (state.inspectedPacketPayload == null) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp).align(Alignment.CenterHorizontally), strokeWidth = 2.dp, color = Color.Cyan)
                     } else {
-                        Text(text = state.inspectedPacketPayload!!, color = Color(0xFF00FF00), fontSize = 9.sp, fontFamily = FontFamily.Monospace, lineHeight = 14.sp)
+                        Text(text = state.inspectedPacketPayload, color = Color(0xFF00FF00), fontSize = 9.sp, fontFamily = FontFamily.Monospace, lineHeight = 14.sp)
                     }
                     Spacer(Modifier.height(16.dp))
                     Button(onClick = { viewModel?.blockIp(link.destIp, "BLOCK FROM 3D HUD") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(4.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.2f), contentColor = Color.Red)) {

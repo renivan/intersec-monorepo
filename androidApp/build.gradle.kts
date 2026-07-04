@@ -84,11 +84,11 @@ dependencies {
     
     // Firebase
     implementation(platform(libs.firebase.bom))
-    implementation("com.google.firebase:firebase-appcheck-playintegrity")
-    implementation("com.google.firebase:firebase-storage")
-    implementation("com.google.firebase:firebase-firestore")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-common")
+    implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.common)
     implementation(libs.kotlinx.coroutines.play.services)
     testImplementation(libs.junit.jupiter)
 

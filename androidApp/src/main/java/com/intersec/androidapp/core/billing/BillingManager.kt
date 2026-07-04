@@ -8,17 +8,13 @@ import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.ProductDetailsResponseListener
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.ProductDetails
-import com.android.billingclient.api.ProductDetailsResponseListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 
 /**
  * BillingManager: Responsável pela ponte financeira com o Google Play.
@@ -30,7 +26,6 @@ class BillingManager(
 ) : PurchasesUpdatedListener {
 
     private val TAG = "interSec_BILLING"
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
     private val billingClient = BillingClient.newBuilder(activity)
         .setListener(this)
@@ -95,11 +90,11 @@ class BillingManager(
             override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
                 val productDetailsList = result.productDetailsList
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && !productDetailsList.isNullOrEmpty()) {
-                    val details = productDetailsList!![0]
+                    val details = productDetailsList[0]
                     val offers = details.subscriptionOfferDetails
                     var offerToken = ""
                     if (!offers.isNullOrEmpty()) {
-                        offerToken = offers!![0].offerToken
+                        offerToken = offers[0].offerToken
                     }
                     
                     val productDetailsParamsList = listOf(
