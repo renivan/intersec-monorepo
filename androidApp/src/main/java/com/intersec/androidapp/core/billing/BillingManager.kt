@@ -10,7 +10,10 @@ import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.ProductDetailsResponseListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -88,31 +91,34 @@ class BillingManager(
             .setProductList(productList)
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { result, productDetailsList ->
-            if (result.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
-                val details = productDetailsList[0]
-                val offers = details.subscriptionOfferDetails
-                var offerToken = ""
-                if (offers != null && offers.isNotEmpty()) {
-                    offerToken = offers[0].offerToken
-                }
-                
-                val productDetailsParamsList = listOf(
-                    BillingFlowParams.ProductDetailsParams.newBuilder()
-                        .setProductDetails(details)
-                        .setOfferToken(offerToken)
+        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
+            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
+                val productDetailsList = result.productDetailsList
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && !productDetailsList.isNullOrEmpty()) {
+                    val details = productDetailsList!![0]
+                    val offers = details.subscriptionOfferDetails
+                    var offerToken = ""
+                    if (!offers.isNullOrEmpty()) {
+                        offerToken = offers!![0].offerToken
+                    }
+                    
+                    val productDetailsParamsList = listOf(
+                        BillingFlowParams.ProductDetailsParams.newBuilder()
+                            .setProductDetails(details)
+                            .setOfferToken(offerToken)
+                            .build()
+                    )
+
+                    val flowParams = BillingFlowParams.newBuilder()
+                        .setProductDetailsParamsList(productDetailsParamsList)
                         .build()
-                )
 
-                val flowParams = BillingFlowParams.newBuilder()
-                    .setProductDetailsParamsList(productDetailsParamsList)
-                    .build()
-
-                billingClient.launchBillingFlow(activity, flowParams)
-            } else {
-                Log.e(TAG, "Erro ao buscar detalhes do produto: ${result.debugMessage}")
+                    billingClient.launchBillingFlow(activity, flowParams)
+                } else {
+                    Log.e(TAG, "Erro ao buscar detalhes do produto: ${billingResult.debugMessage}")
+                }
             }
-        }
+        })
     }
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {

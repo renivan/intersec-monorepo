@@ -60,10 +60,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 import io.github.sceneview.SceneView
+import io.github.sceneview.math.Rotation
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberModelInstance
+import io.github.sceneview.rememberModelLoader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -111,39 +115,26 @@ fun Neural3DContent(
             indication = null
         ) { viewModel?.inspectNeuralLink(null) })
 
-        // --- CAMADA 1: MOTOR 3D FILAMENT ---
-        val isLoadingModel = remember { mutableStateOf(true) }
-        AndroidView(
+        // --- CAMADA 1: MOTOR 3D FILAMENT (Composable SceneView) ---
+        val engine = rememberEngine()
+        val modelLoader = rememberModelLoader(engine)
+        val modelInstance = rememberModelInstance(modelLoader, "models/earth.glb")
+        
+        SceneView(
             modifier = Modifier.fillMaxSize(),
-            factory = { context ->
-                SceneView(context).apply {
-                    modelLoader.loadModelAsync(
-                        fileLocation = "models/earth.glb",
-                        onResult = { modelInstance ->
-                            isLoadingModel.value = false
-                            modelInstance?.let { asset ->
-                                val earthNode = io.github.sceneview.node.ModelNode(
-                                    modelInstance = asset.instance,
-                                    scaleToUnits = zoomScale
-                                ).apply {
-                                    position = io.github.sceneview.math.Position(y = 0.06f)
-                                    name = "earth"
-                                }
-                                addChildNode(earthNode)
-                            }
-                        }
-                    )
-                }
-            },
-            update = { view -> 
-                view.childNodes.filterIsInstance<io.github.sceneview.node.ModelNode>().firstOrNull { it.name == "earth" }?.let { earth ->
-                    earth.rotation = io.github.sceneview.math.Rotation(x = rotationX, y = rotationY)
-                    earth.scale = io.github.sceneview.math.Position(zoomScale)
-                }
+            engine = engine,
+            modelLoader = modelLoader,
+        ) {
+            modelInstance?.let { instance ->
+                ModelNode(
+                    modelInstance = instance,
+                    scaleToUnits = zoomScale,
+                    rotation = Rotation(x = rotationX, y = rotationY)
+                )
             }
-        )
+        }
 
-        if (isLoadingModel.value) {
+        if (modelInstance == null) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.Cyan, strokeWidth = 2.dp)
         }
 
