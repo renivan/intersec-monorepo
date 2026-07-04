@@ -1,7 +1,9 @@
 package com.intersec.androidapp.ui.theme
 
 import android.app.Activity
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
@@ -120,7 +122,9 @@ fun InterSecTheme(
             
             // Lógica moderna para barra de status (sem avisos de depreciação)
             window.statusBarColor = colorScheme.background.toArgb()
+            window.navigationBarColor = colorScheme.background.toArgb()
             insetsController.isAppearanceLightStatusBars = !isDarkMode
+            insetsController.isAppearanceLightNavigationBars = !isDarkMode
         }
     }
 
