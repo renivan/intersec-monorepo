@@ -1,6 +1,6 @@
 [versions]
 agp = "9.2.1"
-kotlin = "2.4.0"
+kotlin = "2.1.0"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -51,7 +51,7 @@ firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appc
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
-kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version = "1.11.0" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version = "1.9.0" }
 firebase-common = { group = "com.google.firebase", name = "firebase-common" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }

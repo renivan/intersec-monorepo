@@ -18,7 +18,7 @@ class BillingManager(
     
     private val billingClient = BillingClient.newBuilder(activity)
         .setListener(this)
-        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+        .enablePendingPurchases()
         .build()
 
     init {
@@ -75,7 +75,7 @@ class BillingManager(
                     val offers = details.subscriptionOfferDetails
                     var offerToken = ""
                     if (!offers.isNullOrEmpty()) {
-                        offerToken = offers[0].offerToken
+                        offerToken = offers!![0].offerToken
                     }
                     
                     val productDetailsParamsList = listOf(

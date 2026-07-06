@@ -1,6 +1,8 @@
 package com.intersec.androidapp.presentation.screens.capture
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.net.VpnService
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,6 +47,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -76,12 +79,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.core.ads.AdManager
-import com.intersec.androidapp.presentation.state.*
+import com.intersec.androidapp.core.vpn.InterSecVpnService
+import com.intersec.androidapp.presentation.state.CaptureRealtimeUiState
+import com.intersec.androidapp.presentation.state.PacketColorPalette
+import com.intersec.androidapp.presentation.state.RealtimeFlowModel
+import com.intersec.androidapp.presentation.state.RealtimePacketModel
 import com.intersec.androidapp.presentation.viewmodel.CaptureRealtimeViewModel
 import java.util.Locale
-import android.app.Activity
-import android.content.Intent
-import com.intersec.androidapp.core.vpn.InterSecVpnService
 
 /**
  * Função de utilidade compartilhada para formatação de volume de dados.
@@ -655,6 +659,7 @@ fun SummaryRow(label: String, value: String) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PacketsListSection(state: CaptureRealtimeUiState) {
     var showFlows by remember { mutableStateOf(false) }

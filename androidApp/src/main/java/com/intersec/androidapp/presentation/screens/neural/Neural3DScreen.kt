@@ -38,7 +38,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Sentinel 3D HUD: Interface imersiva baseada em Google Filament.
- * Compatível com SceneView 2.2.1
+ * Otimizado para SceneView 2.2.1 (Estável para SDK 35)
  */
 @Composable
 fun Neural3DScreen(
@@ -80,12 +80,13 @@ fun Neural3DContent(
             indication = null
         ) { viewModel?.inspectNeuralLink(null) })
 
-        // --- CAMADA 1: MOTOR 3D FILAMENT (AndroidView for SceneView 2.2.1) ---
+        // --- CAMADA 1: MOTOR 3D FILAMENT (SceneView 2.2.1) ---
         val isLoadingModel = remember { mutableStateOf(true) }
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
-                SceneView(context).apply {
+                val sceneView = SceneView(context)
+                sceneView.apply {
                     modelLoader.loadModelAsync(
                         fileLocation = "models/earth.glb",
                         onResult = { modelInstance ->
@@ -102,11 +103,11 @@ fun Neural3DContent(
                         }
                     )
                 }
+                sceneView
             },
             update = { view -> 
                 view.childNodes.filterIsInstance<ModelNode>().firstOrNull { it.name == "earth" }?.let { earth ->
                     earth.rotation = Rotation(x = rotationX, y = rotationY)
-                    // Para zoom em 2.2.1, usamos scaleToUnits ou manipulamos a escala do nó
                     earth.scale = io.github.sceneview.math.Position(zoomScale)
                 }
             }
@@ -116,7 +117,7 @@ fun Neural3DContent(
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.Cyan, strokeWidth = 2.dp)
         }
 
-        // --- CAMADA 2 & 3: HUD TÉCNICO (Retrátil) ---
+        // --- CAMADA 2 & 3: HUD TÉCNICO ---
         if (showHud) {
             Column(
                 modifier = Modifier
@@ -168,11 +169,10 @@ fun Neural3DContent(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 70.dp), // Elevado para 70dp
+                .padding(horizontal = 20.dp, vertical = 70.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
-            // 1. Controle Azimutal (D-PAD)
             Box(modifier = Modifier.size(110.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(color = Color.Cyan.copy(alpha = 0.05f))
@@ -184,13 +184,9 @@ fun Neural3DContent(
                 Text("D-PAD", modifier = Modifier.align(Alignment.Center), color = Color.Cyan.copy(alpha = 0.4f), fontSize = 8.sp, fontWeight = FontWeight.Black)
             }
 
-            // 2. Barra de Rotação X (Vertical)
             VerticalControlBar("ROT X", rotationX, -180f..180f, Color.Cyan) { rotationX = it }
-
-            // 3. Barra de Rotação Y (Horizontal/Azimute)
             VerticalControlBar("ROT Y", rotationY, -180f..180f, Color.Cyan) { rotationY = it }
 
-            // 4. Barra Central de Playback (Vertical)
             Column(
                 modifier = Modifier
                     .height(110.dp)
@@ -205,7 +201,6 @@ fun Neural3DContent(
                 PlaybackIcon(Icons.Default.SkipNext)
             }
 
-            // 5. Barra de Zoom
             VerticalControlBar("ZOOM", zoomScale, 0.05f..1.5f, Color.White) { zoomScale = it }
         }
 
