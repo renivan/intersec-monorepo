@@ -55,6 +55,8 @@ class InterSecVpnService : VpnService() {
                 val success = bridgeClient.attachVpnTunnel(fd)
                 if (success) {
                     Log.d("InterSecVPN", "Análise em Tempo Real ATIVADA via VpnService.")
+                    // Inicializa a sessão de captura no motor para o túnel
+                    bridgeClient.startCapture("vpn0", "")
                     updateNotification()
                 } else {
                     Log.e("InterSecVPN", "Erro: O motor Native recusou a conexão do túnel.")

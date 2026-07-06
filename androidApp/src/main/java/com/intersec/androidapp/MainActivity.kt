@@ -14,13 +14,25 @@ import com.intersec.androidapp.ui.theme.InterSecTheme
 
 import com.intersec.androidapp.core.ads.ConsentManager
 import com.google.android.gms.ads.MobileAds
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var billingManager: BillingManager
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        // Permissões concedidas ou negadas
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        checkAndRequestPermissions()
 
         setContent {
             val analysisViewModel: AnalysisViewModel = viewModel()
@@ -41,6 +53,33 @@ class MainActivity : ComponentActivity() {
             ) {
                 InterSecApp(analysisViewModel)
             }
+        }
+    }
+
+    private fun checkAndRequestPermissions() {
+        val permissions = mutableListOf<String>()
+
+        // Localização (para detalhes da rede)
+        permissions.add(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        permissions.add(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+
+        // Bluetooth (Android 12+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions.add(android.Manifest.permission.BLUETOOTH_SCAN)
+            permissions.add(android.Manifest.permission.BLUETOOTH_CONNECT)
+        }
+
+        // Notificações (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val toRequest = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (toRequest.isNotEmpty()) {
+            requestPermissionLauncher.launch(toRequest.toTypedArray())
         }
     }
 
