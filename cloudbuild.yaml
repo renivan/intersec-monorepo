@@ -33,8 +33,7 @@ artifacts:
   objects:
     location: 'gs://${_ARTIFACT_BUCKET}/intersec-monorepo/builds/$BUILD_ID'
     paths:
-      - 'androidApp/build/outputs/bundle/release/*.aab'
-      - 'androidApp/build/outputs/apk/release/*.apk'
+      - 'androidApp/build/outputs/apk/debug/*.apk'
       - 'shared/build/outputs/**/*.aar'
 
 # Variáveis (Certifique-se de configurar no Gatilho do Cloud Build)
