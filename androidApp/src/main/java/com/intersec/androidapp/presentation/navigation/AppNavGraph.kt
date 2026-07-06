@@ -1,5 +1,9 @@
 package com.intersec.androidapp.presentation.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,7 +38,11 @@ fun AppNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.INITIALIZATION
+        startDestination = AppRoutes.INITIALIZATION,
+        enterTransition = { slideInHorizontally { it } + fadeIn() },
+        exitTransition = { slideOutHorizontally { -it } + fadeOut() },
+        popEnterTransition = { slideInHorizontally { -it } + fadeIn() },
+        popExitTransition = { slideOutHorizontally { it } + fadeOut() }
     ) {
         composable(AppRoutes.INITIALIZATION) {
             InitializationScreen(

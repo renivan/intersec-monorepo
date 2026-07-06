@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -133,12 +132,6 @@ fun InterSecTheme(
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
             
-            // Lógica moderna para barras de sistema (Suprimindo avisos de depreciação para manter compatibilidade visual)
-            @Suppress("DEPRECATION")
-            window.statusBarColor = colorScheme.background.toArgb()
-            @Suppress("DEPRECATION")
-            window.navigationBarColor = colorScheme.background.toArgb()
-
             insetsController.isAppearanceLightStatusBars = !isDarkMode
             insetsController.isAppearanceLightNavigationBars = !isDarkMode
         }
