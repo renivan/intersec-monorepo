@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
  * Gerencia o rastreamento de localização em tempo real e persistência exata.
  */
 class LocationTracker(
-    private val context: Context,
+    context: Context,
     private val securitySettings: SecuritySettingsManager
 ) {
     private val fusedLocationClient: FusedLocationProviderClient =

@@ -13,8 +13,6 @@ import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 import com.intersec.androidapp.ui.InterSecApp
 import com.intersec.androidapp.ui.theme.InterSecTheme
 
-import com.intersec.androidapp.core.ads.ConsentManager
-import com.google.android.gms.ads.MobileAds
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,7 +24,7 @@ class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
+    ) { _ ->
         // Permissões concedidas ou negadas
     }
 
