@@ -128,9 +128,13 @@ class AnalysisViewModel(
     }
 
     fun upgradeToPro() {
+        if (_uiState.value.isLoading) return
+        
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
             tierManager.performUpgrade()
             addLog("Upgrade: Acesso PREMIUM ativado e motor validado.", LogLevel.SUCCESS)
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 

@@ -107,14 +107,22 @@ fun SecurityReportScreen(
             if (state.userTier == 0) {
                 item {
                     MonetizationCard(
-                        onUpgrade = { viewModel.upgradeToPro() },
+                        onUpgrade = { 
+                            if (!state.isLoading) {
+                                (context as? Activity)?.let { activity ->
+                                    (activity as? com.intersec.androidapp.MainActivity)?.startBillingFlow()
+                                }
+                            }
+                        },
                         onWatchAd = {
-                            (context as? Activity)?.let { activity ->
-                                AdManager.showRewardedAd(
-                                    activity = activity,
-                                    onRewardEarned = { viewModel.addRewardTime() },
-                                    onFailure = { /* Log erro ou Toast */ },
-                                )
+                            if (!state.isLoading) {
+                                (context as? Activity)?.let { activity ->
+                                    AdManager.showRewardedAd(
+                                        activity = activity,
+                                        onRewardEarned = { viewModel.addRewardTime() },
+                                        onFailure = { /* Log erro ou Toast */ },
+                                    )
+                                }
                             }
                         }
                     )

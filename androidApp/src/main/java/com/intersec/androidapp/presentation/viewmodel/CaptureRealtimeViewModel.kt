@@ -172,9 +172,15 @@ class CaptureRealtimeViewModel(
     }
 
     fun toggleTier() {
+        if (_uiState.value.isLoading) return
+        
         val nextTier = if (_uiState.value.userTier == 0) 1 else 0
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
             MainApplication.appModule.securitySettingsManager.setUserTier(nextTier)
+            // Sincroniza o motor após mudança manual de tier (Debug/Teste)
+            MainApplication.appModule.tierManager.syncAndValidate()
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 

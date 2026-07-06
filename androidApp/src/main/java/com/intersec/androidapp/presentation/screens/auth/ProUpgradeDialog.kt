@@ -71,8 +71,11 @@ fun ProUpgradeDialog(
                 Button(
                     onClick = {
                         val activity = context as? MainActivity
-                        activity?.startBillingFlow()
-                        onUpgrade()
+                        if (activity != null) {
+                            activity.startBillingFlow()
+                        } else {
+                            onUpgrade() // Fallback para desenvolvimento
+                        }
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(4.dp),
