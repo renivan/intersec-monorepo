@@ -13,7 +13,7 @@ steps:
         echo "$$GOOGLE_SERVICES_JSON" > androidApp/google-services.json
         
         chmod +x gradlew
-        ./gradlew clean :shared:assemble :androidApp:bundleRelease :androidApp:assembleRelease -Dorg.gradle.jvmargs="-Xmx4096m"
+        ./gradlew clean :shared:assemble :androidApp:assembleDebug -Dorg.gradle.jvmargs="-Xmx4096m"
     secretEnv: ['GOOGLE_SERVICES_JSON']
 
 # Definição da integração nativa com o Secret Manager
