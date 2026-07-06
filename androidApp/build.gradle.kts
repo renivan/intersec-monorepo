@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.intersec.androidapp"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.intersec.androidapp"
