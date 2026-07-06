@@ -2,18 +2,7 @@ package com.intersec.androidapp.core.billing
 
 import android.app.Activity
 import android.util.Log
-import com.android.billingclient.api.AcknowledgePurchaseParams
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.BillingFlowParams
-import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.PendingPurchasesParams
-import com.android.billingclient.api.ProductDetailsResponseListener
-import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryProductDetailsResult
-import com.android.billingclient.api.QueryPurchasesParams
+import com.android.billingclient.api.*
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 
 /**
@@ -37,18 +26,11 @@ class BillingManager(
     }
 
     private fun startConnection() {
-        if (isEmulator() && !hasPlayStore()) {
-            Log.w(TAG, "Billing: Play Store não detectada. Modo Billing desativado para este dispositivo.")
-            return
-        }
-
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     Log.i(TAG, "Conexão com Google Play Store estabelecida.")
                     checkActiveSubscriptions()
-                } else {
-                    Log.w(TAG, "Falha ao conectar com Billing: ${billingResult.debugMessage}")
                 }
             }
 
@@ -58,23 +40,6 @@ class BillingManager(
         })
     }
 
-    private fun isEmulator(): Boolean {
-        val model = android.os.Build.MODEL
-        return model.contains("sdk", ignoreCase = true) || model.contains("Emulator", ignoreCase = true)
-    }
-
-    private fun hasPlayStore(): Boolean {
-        return try {
-            activity.packageManager.getPackageInfo("com.android.vending", 0)
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Verifica se o usuário já possui a assinatura ativa.
-     */
     fun checkActiveSubscriptions() {
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
@@ -91,10 +56,6 @@ class BillingManager(
         }
     }
 
-    /**
-     * Inicia o fluxo de compra/assinatura.
-     * ID do Produto sugerido: "intersec_elite_monthly"
-     */
     fun launchPurchaseFlow(productId: String = "intersec_elite_monthly") {
         val productList = listOf(
             QueryProductDetailsParams.Product.newBuilder()
@@ -108,8 +69,7 @@ class BillingManager(
             .build()
 
         billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
-            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
-                val productDetailsList = result.productDetailsList
+            override fun onProductDetailsResponse(billingResult: BillingResult, productDetailsList: List<ProductDetails>) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
                     val details = productDetailsList[0]
                     val offers = details.subscriptionOfferDetails
@@ -149,8 +109,6 @@ class BillingManager(
 
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            // TODO: Aqui entra a Verificação via servidor (Firebase)
-            // Por enquanto, valida localmente para permitir o teste de UI
             if (!purchase.isAcknowledged) {
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
