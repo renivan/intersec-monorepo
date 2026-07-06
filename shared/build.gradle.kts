@@ -6,7 +6,7 @@ plugins {
 kotlin {
     android {
         namespace = "com.intersec.shared"
-        compileSdk = 37
+        compileSdk = 35
         minSdk = 24
         
         withHostTestBuilder {}.configure {}
