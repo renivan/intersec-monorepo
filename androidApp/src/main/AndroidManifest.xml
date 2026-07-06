@@ -26,6 +26,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
 
+    <queries>
+        <package android:name="com.android.vending" />
+        <package android:name="com.google.android.gms" />
+    </queries>
+
     <application
         android:name=".app.MainApplication"
         android:allowBackup="true"
@@ -40,6 +45,13 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4865121565284201~3081076016" />
+
+        <!-- Fix: Failed to queue input buffer / MediaCodec crash in AdMob WebView -->
+        <activity
+            android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="false"
+            tools:replace="android:hardwareAccelerated" />
 
         <activity
             android:name=".MainActivity"

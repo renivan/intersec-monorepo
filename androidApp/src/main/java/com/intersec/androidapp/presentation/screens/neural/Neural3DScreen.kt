@@ -67,6 +67,8 @@ import io.github.sceneview.node.ModelNode
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
 import io.github.sceneview.math.Scale
+import io.github.sceneview.node.CameraNode
+import io.github.sceneview.rememberCameraNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.rememberModelLoader
@@ -123,11 +125,16 @@ fun Neural3DContent(
         val engine = rememberEngine()
         val modelLoader = rememberModelLoader(engine)
         val modelInstance = rememberModelInstance(modelLoader, "models/earth.glb")
+        val cameraNode = rememberCameraNode(engine).apply {
+            position = Position(z = 4.0f) // Afasta a câmera para ver o globo
+            lookAt(Position(0f, 0f, 0f))  // Garante que está olhando para o centro
+        }
         
         SceneView(
             modifier = Modifier.fillMaxSize(),
             engine = engine,
             modelLoader = modelLoader,
+            cameraNode = cameraNode,
         ) {
             modelInstance?.let { instance ->
                 ModelNode(

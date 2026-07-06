@@ -34,14 +34,17 @@ class MainApplication : Application() {
         Firebase.initialize(context = this)
 
         // 3. Instala a factory do App Check
-        // No emulador, usamos o DebugProvider para evitar erros de integridade (-17)
-        val providerFactory = if (isEmulator()) {
-            DebugAppCheckProviderFactory.getInstance()
+        // No emulador, usamos o DebugProvider ou desativamos temporariamente para evitar bloqueios de attestation
+        if (isEmulator()) {
+            Log.i("interSec_APP", "Emulador detectado: Usando modo de desenvolvimento para App Check.")
+            Firebase.appCheck.installAppCheckProviderFactory(
+                DebugAppCheckProviderFactory.getInstance()
+            )
         } else {
-            PlayIntegrityAppCheckProviderFactory.getInstance()
+            Firebase.appCheck.installAppCheckProviderFactory(
+                PlayIntegrityAppCheckProviderFactory.getInstance()
+            )
         }
-        
-        Firebase.appCheck.installAppCheckProviderFactory(providerFactory)
 
         appModule = AppModule(this)
     }

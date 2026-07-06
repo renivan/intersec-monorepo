@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.intersec.androidapp"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.intersec.androidapp"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
