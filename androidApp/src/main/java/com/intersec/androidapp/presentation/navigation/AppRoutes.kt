@@ -1,6 +1,7 @@
 package com.intersec.androidapp.presentation.navigation
 
 object AppRoutes {
+    const val INITIALIZATION = "initialization"
     const val CAPTURE = "capture"
     const val CAPTURE_REALTIME = "capture_realtime"
     const val DIAGNOSTIC = "diagnostic"

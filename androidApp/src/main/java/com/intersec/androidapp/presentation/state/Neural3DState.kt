@@ -23,7 +23,10 @@ data class NeuralLink3D(
     // Vetores 3D (X, Y, Z) calculados
     val x: Float = 0f,
     val y: Float = 0f,
-    val z: Float = 0f
+    val z: Float = 0f,
+
+    val isInterception: Boolean = false,
+    val lastPulseTime: Long = System.currentTimeMillis()
 )
 
 data class Neural3DUiState(

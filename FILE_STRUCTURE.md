@@ -1,4 +1,4 @@
-﻿# 🛡️ ESTRUTURA ESTRUTURAL: interSec Elite Tactical
+﻿# 🛡️ Estrutura Estrutural: interSec Elite Tactical
 
 Este documento detalha a organização do projeto interSec, focado em segurança tática e análise de rede de alta performance.
 

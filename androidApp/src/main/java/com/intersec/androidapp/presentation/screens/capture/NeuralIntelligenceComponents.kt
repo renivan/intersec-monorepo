@@ -74,14 +74,6 @@ fun NeuralConnectivityMap(state: com.intersec.androidapp.presentation.state.Capt
             }
         }
 
-        Text(
-            "SCAN ATIVO",
-            modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = primaryColor.copy(alpha = 0.6f),
-            fontFamily = FontFamily.Default,
-            fontSize = 9.sp
-        )
+        // Sem rótulo SCAN ATIVO
     }
 }

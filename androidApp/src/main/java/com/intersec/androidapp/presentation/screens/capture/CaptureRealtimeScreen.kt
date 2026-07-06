@@ -54,6 +54,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -165,7 +167,7 @@ fun CaptureRealtimeScreen(
                 .verticalScroll(scrollState)
                 .padding(12.dp)
         ) {
-            CaptureHeader(state, onBack)
+            CaptureHeader(state, viewModel, onBack)
             Spacer(Modifier.height(8.dp))
             InterfaceNetworkCard(state, viewModel)
             
@@ -211,7 +213,7 @@ fun CaptureRealtimeScreen(
 }
 
 @Composable
-fun CaptureHeader(state: CaptureRealtimeUiState, onBack: () -> Unit) {
+fun CaptureHeader(state: CaptureRealtimeUiState, viewModel: CaptureRealtimeViewModel, onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -239,12 +241,33 @@ fun CaptureHeader(state: CaptureRealtimeUiState, onBack: () -> Unit) {
             )
         }
 
-        if (state.isCapturing) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .background(Color.Red, shape = CircleShape)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (state.userTier == 1) "PRO" else "FREE",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                color = if (state.userTier == 1) Color(0xFFEAB308) else Color.Gray,
+                modifier = Modifier.padding(end = 4.dp)
             )
+            Switch(
+                checked = state.userTier == 1,
+                onCheckedChange = { viewModel.toggleTier() },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color(0xFFEAB308),
+                    checkedTrackColor = Color(0xFFEAB308).copy(alpha = 0.5f),
+                    uncheckedThumbColor = Color.Gray,
+                    uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
+                ),
+                modifier = Modifier.size(32.dp).padding(end = 8.dp)
+            )
+
+            if (state.isCapturing) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(Color.Red, shape = CircleShape)
+                )
+            }
         }
     }
 
@@ -459,22 +482,25 @@ fun CaptureControlsSection(
         if (!state.isCapturing) {
             Button(
                 onClick = { 
-                    if (state.userTier == 0) {
-                        activity?.let {
-                            AdManager.showRewardedAd(it, {
-                                if (!state.isVpnAuthorized) {
-                                    viewModel.requestVpnAuthorization()
-                                } else {
-                                    viewModel.startCapture()
-                                }
-                            }, {})
-                        }
-                    } else {
+                    val onAction = {
                         if (!state.isVpnAuthorized) {
                             viewModel.requestVpnAuthorization()
                         } else {
                             viewModel.startCapture()
                         }
+                    }
+
+                    if (state.userTier == 0) {
+                        activity?.let {
+                            AdManager.showRewardedAd(it, {
+                                onAction()
+                            }, {
+                                // Fallback: se o ad falhar, inicia assim mesmo para não travar o usuário
+                                onAction()
+                            })
+                        } ?: onAction()
+                    } else {
+                        onAction()
                     }
                 },
                 modifier = Modifier.weight(1f).height(48.dp),

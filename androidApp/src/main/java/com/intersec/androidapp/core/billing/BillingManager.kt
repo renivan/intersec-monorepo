@@ -37,11 +37,18 @@ class BillingManager(
     }
 
     private fun startConnection() {
+        if (isEmulator() && !hasPlayStore()) {
+            Log.w(TAG, "Billing: Play Store não detectada. Modo Billing desativado para este dispositivo.")
+            return
+        }
+
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     Log.i(TAG, "Conexão com Google Play Store estabelecida.")
                     checkActiveSubscriptions()
+                } else {
+                    Log.w(TAG, "Falha ao conectar com Billing: ${billingResult.debugMessage}")
                 }
             }
 
@@ -49,6 +56,20 @@ class BillingManager(
                 Log.w(TAG, "Conexão com Google Play perdida. Tentando reconectar...")
             }
         })
+    }
+
+    private fun isEmulator(): Boolean {
+        val model = android.os.Build.MODEL
+        return model.contains("sdk", ignoreCase = true) || model.contains("Emulator", ignoreCase = true)
+    }
+
+    private fun hasPlayStore(): Boolean {
+        return try {
+            activity.packageManager.getPackageInfo("com.android.vending", 0)
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     /**

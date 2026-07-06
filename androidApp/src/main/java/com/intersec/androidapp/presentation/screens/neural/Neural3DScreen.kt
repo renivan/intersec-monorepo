@@ -63,12 +63,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 import io.github.sceneview.SceneView
+import io.github.sceneview.node.ModelNode
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
 import io.github.sceneview.math.Scale
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.node.SphereNode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -132,7 +134,22 @@ fun Neural3DContent(
                     modelInstance = instance,
                     scale = Scale(zoomScale),
                     rotation = Rotation(x = rotationX, y = rotationY),
-                    position = Position(z = 0.0f) // Resetado para 0.0f para garantir que não suma da câmera
+                    position = Position(z = 0.0f)
+                )
+            }
+
+            // Renderização dos Pontos de Interceptação (Nódulos Neurais)
+            state.neuralLinks.forEach { link ->
+                // Criamos um nó de esfera para cada IP interceptado
+                // Ele orbita sincronizado com a rotação da terra
+                SphereNode(
+                    radius = 1.2f * link.intensity, 
+                    position = Position(
+                        x = link.x * zoomScale,
+                        y = link.y * zoomScale,
+                        z = link.z * zoomScale
+                    ),
+                    rotation = Rotation(x = rotationX, y = rotationY)
                 )
             }
         }

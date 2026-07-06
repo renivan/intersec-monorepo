@@ -24,9 +24,18 @@ class NeuralCoreEngine(
 
     /**
      * Processa dados crus de rede e converte em entidades 3D Geo-Referenciadas.
+     * Estrutura a visualização como pontos de interceptação.
      */
     fun processConnection(ip: String, protocol: String, volume: Long) {
         scope.launch {
+            // Verifica se já temos este nó para evitar sobrecarga neural
+            val existing = _neuralStream.value.find { it.destIp == ip }
+            if (existing != null) {
+                // Se já existe, apenas atualizamos a intensidade (Pulso de Interceptação)
+                updateNodeIntensity(ip, volume)
+                return@launch
+            }
+
             // 1. Busca Localização REAL (Sem Mocks)
             val geoResult = geoIpRepository.resolveIp(ip)
             
@@ -35,7 +44,8 @@ class NeuralCoreEngine(
                 val lon = geo.lon ?: 0.0
 
                 // 2. Transforma Esférico -> Cartesiano 3D (X, Y, Z)
-                val radius = 100f
+                // Usamos um raio um pouco maior que a Terra para flutuar os nós
+                val radius = 105f 
                 val phi = Math.toRadians(90 - lat).toFloat()
                 val theta = Math.toRadians(lon + 180).toFloat()
 
@@ -44,27 +54,48 @@ class NeuralCoreEngine(
                 val y = (radius * cos(phi))
 
                 // 3. Calcula Intensidade Neural baseado no volume de transporte
-                val intensity = (volume / 500000f).coerceIn(0.2f, 1.0f)
+                val intensity = (volume / 500000f).coerceIn(0.4f, 1.0f)
 
-                // 4. Injeta no fluxo global do sistema
+                // 4. Injeta no fluxo global do sistema como PONTO DE INTERCEPTAÇÃO
                 val newLink = NeuralLink3D(
                     id = java.util.UUID.randomUUID().toString(),
                     sourceIp = "DEVICE",
                     destIp = ip,
                     protocol = protocol,
                     intensity = intensity,
-                    color = if (protocol.contains("TCP")) androidx.compose.ui.graphics.Color.Cyan else androidx.compose.ui.graphics.Color.Magenta,
+                    color = getProtocolColor(protocol),
                     latitude = lat,
                     longitude = lon,
                     countryCode = geo.countryCode ?: "??",
                     city = geo.city ?: "Unknown",
                     x = x,
                     y = y,
-                    z = z
+                    z = z,
+                    isInterception = true
                 )
 
-                _neuralStream.value = (_neuralStream.value + newLink).takeLast(60)
+                _neuralStream.value = (_neuralStream.value + newLink).takeLast(100)
             }
+        }
+    }
+
+    private fun updateNodeIntensity(ip: String, volume: Long) {
+        _neuralStream.value = _neuralStream.value.map { node ->
+            if (node.destIp == ip) {
+                val newIntensity = (node.intensity + 0.2f).coerceAtMost(1.0f)
+                node.copy(intensity = newIntensity, lastPulseTime = System.currentTimeMillis())
+            } else {
+                node
+            }
+        }
+    }
+
+    private fun getProtocolColor(protocol: String): androidx.compose.ui.graphics.Color {
+        return when {
+            protocol.contains("TCP") -> androidx.compose.ui.graphics.Color(0xFF00FBFF) // Cyan
+            protocol.contains("UDP") -> androidx.compose.ui.graphics.Color(0xFFFF00D4) // Magenta
+            protocol.contains("TLS") || protocol.contains("SSL") -> androidx.compose.ui.graphics.Color(0xFF7000FF) // Purple
+            else -> androidx.compose.ui.graphics.Color.Green
         }
     }
 

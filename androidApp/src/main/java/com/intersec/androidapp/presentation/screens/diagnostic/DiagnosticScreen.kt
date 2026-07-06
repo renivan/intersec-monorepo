@@ -3,6 +3,7 @@ package com.intersec.androidapp.presentation.screens.diagnostic
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.NoEncryption
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -31,12 +36,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import com.intersec.androidapp.core.di.ModuleRegistry
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,6 +67,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.core.bridge.NativeBridgeClient
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
+import com.intersec.androidapp.core.network.ThreatIntelManager
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -106,32 +118,14 @@ fun DiagnosticScreen(
                 .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
+            // ===== SEÇÃO 0: VALIDADOR DE PERFIL (APENAS TESTE) =====
+            ProfileValidationCard(isPremium, analysisViewModel)
+            Spacer(Modifier.height(24.dp))
+
             // ===== SEÇÃO 1: INTEGRIDADE DO SISTEMA =====
             Text("NÚCLEO DE OPERAÇÕES", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(8.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (systemStatus == "PASS") Color(0xFF22C55E).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
-                ),
-                border = BorderStroke(1.dp, if (systemStatus == "PASS") Color(0xFF22C55E) else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        if (systemStatus == "PASS") Icons.Default.CheckCircle else Icons.Default.Security,
-                        contentDescription = null,
-                        tint = if (systemStatus == "PASS") Color(0xFF22C55E) else MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    Column {
-                        Text("Integridade do Sistema", fontWeight = FontWeight.Bold)
-                        Text("Status: $systemStatus", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    }
-                }
-            }
+            SystemIntegrityCard(systemStatus, isPremium)
 
             Spacer(Modifier.height(16.dp))
 
@@ -156,7 +150,11 @@ fun DiagnosticScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // ===== SEÇÃO 2: REPOSITÓRIO FORTINET (PREMIUM) =====
+            // ===== SEÇÃO 2: MATRIZ DE RECURSOS ATIVOS =====
+            FeatureMatrixSection(isPremium)
+            Spacer(Modifier.height(32.dp))
+
+            // ===== SEÇÃO 3: REPOSITÓRIO FORTINET (PREMIUM) =====
             Text("INTELIGÊNCIA GLOBAL (FORTINET)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.height(8.dp))
             
@@ -210,66 +208,49 @@ fun DiagnosticScreen(
 
             Spacer(Modifier.height(40.dp))
 
-            // ===== LÓGICA DE SINCRONIA FORTINET =====
+
+            // ===== LÓGICA DE SINCRONIA FORTINET (REAL) =====
             LaunchedEffect(isSyncingIntel) {
                 if (isSyncingIntel) {
-                    try {
-                        intelLogs.add("> Conectando ao cluster FortiGuard API...")
-                        delay(1200.milliseconds)
-                        intelLogs.add("> [OK] Handshake estabelecido.")
-                        delay(800.milliseconds)
-                        intelLogs.add("> Baixando novas assinaturas de ameaças...")
-                        delay(1500.milliseconds)
-                        intelLogs.add("> + 4.285 novos IPs maliciosos detectados.")
-                        delay(800.milliseconds)
-                        intelLogs.add("> Injetando no motor nativo interSec...")
-                        
-                        // Chamada real para atualizar a base no motor nativo
-                        val success = bridge.updateThreatDatabase("FORTINET_FEED_ACTIVED".toByteArray())
-                        
+                    intelLogs.add("> Conectando ao Cloud Firestore (interSec Base)...")
+                    ThreatIntelManager.syncThreatFeeds(isPremium) { success, message ->
                         if (success) {
-                            intelLogs.add("> [SUCESSO] Motor nativo blindado com Fortinet Intel.")
+                            intelLogs.add("> [SUCESSO] $message")
+                            intelLogs.add("> Motor nativo blindado com assinaturas reais.")
                         } else {
-                            intelLogs.add("!!! FALHA: Erro de JNI na injeção de base.")
+                            intelLogs.add("!!! FALHA: $message")
                         }
-                    } catch (e: Exception) {
-                        intelLogs.add("!!! ERRO DE CONEXÃO: ${e.message}")
-                    } finally {
                         isSyncingIntel = false
                     }
                 }
             }
 
-            // ===== LÓGICA DE TESTE DO SISTEMA (MANTIDA) =====
+            // ===== LÓGICA DE TESTE DO SISTEMA (REAL) =====
             LaunchedEffect(isRunningTest) {
                 if (isRunningTest) {
                     try {
-                        delay(500.milliseconds)
-                        testLogs.add("> [1/4] Validando JNI Bridge (@FastNative)...")
+                        testLogs.add("> Verificando integridade física do Motor Native...")
+                        delay(400.milliseconds)
+                        
                         val ping = bridge.ping()
-                        testLogs.add("  + Resposta Native: $ping")
-                        
-                        delay(800.milliseconds)
-                        testLogs.add("> [2/4] Testando Ingestão e Interpretação...")
-                        val testResult = bridge.runFullSystemTest()
-                        val parts = testResult.split("|")
-                        if (parts[0] == "PASS") {
-                            testLogs.add("  + SUCESSO: Latência Nativa ${parts.getOrNull(2) ?: "N/A"}")
-                        } else {
-                            throw Exception("Falha no teste nativo")
+                        if (ping == "ERROR: NATIVE_NOT_LOADED") {
+                            throw Exception("Biblioteca .so não foi carregada no sistema.")
                         }
+                        testLogs.add("  + Resposta JNI: $ping [ALIVE]")
 
-                        delay(800.milliseconds)
-                        testLogs.add("> [3/4] Validando Identificação de Protocolos...")
-                        val overview = bridge.getCaptureOverview()
-                        testLogs.add("  + Inteligência detectada: Ativa.")
-
-                        delay(800.milliseconds)
-                        testLogs.add("> [4/4] Verificando Persistência Background...")
-                        testLogs.add("  + SUCESSO: Guardian Service sincronizado.")
+                        delay(400.milliseconds)
+                        testLogs.add("> Executando Auto-Teste de Stress (C++)...")
+                        val testResult = bridge.runFullSystemTest()
                         
-                        systemStatus = "PASS"
-                        testLogs.add("> --- TESTE FINALIZADO COM 100% DE SUCESSO ---")
+                        if (testResult.startsWith("PASS")) {
+                            testLogs.add("  + VEREDITO: Motor íntegro.")
+                            testLogs.add("  + DETALHES: $testResult")
+                            systemStatus = "PASS"
+                            testLogs.add("> --- 100% OPERACIONAL ---")
+                        } else {
+                            systemStatus = "FAIL"
+                            testLogs.add("!!! FALHA NATIVA: $testResult")
+                        }
                     } catch (e: Exception) {
                         systemStatus = "FAIL"
                         testLogs.add("!!! ERRO CRÍTICO: ${e.message}")
@@ -279,6 +260,123 @@ fun DiagnosticScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ProfileValidationCard(isPremium: Boolean, viewModel: AnalysisViewModel) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = if (isPremium) Color(0xFFEAB308).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, if (isPremium) Color(0xFFEAB308) else Color.Gray.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    if (isPremium) Icons.Default.Star else Icons.Default.StarBorder,
+                    contentDescription = null,
+                    tint = if (isPremium) Color(0xFFEAB308) else Color.Gray
+                )
+                Spacer(Modifier.width(16.dp))
+                Column {
+                    Text(if (isPremium) "PERFIL PRO ATIVO" else "PERFIL FREE ATIVO", fontWeight = FontWeight.Black, fontSize = 12.sp)
+                    Text("Clique ao lado para alternar e testar", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
+            }
+            Switch(
+                checked = isPremium,
+                onCheckedChange = { 
+                    if (it) viewModel.upgradeToPro() 
+                    else {
+                        // Forçar volta para o Free no DataStore
+                        // Nota: no AnalysisViewModel.kt o upgradeToPro() chama o tierManager.performUpgrade()
+                        // Vamos adicionar uma forma rápida de alternar aqui
+                        analysisViewModelToggleTier(viewModel)
+                    }
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color(0xFFEAB308),
+                    checkedTrackColor = Color(0xFFEAB308).copy(alpha = 0.5f)
+                )
+            )
+        }
+    }
+}
+
+private fun analysisViewModelToggleTier(viewModel: AnalysisViewModel) {
+    val current = if (viewModel.uiState.value.userTier == 1) 0 else 1
+    val scope = MainScope()
+    scope.launch {
+        com.intersec.androidapp.app.MainApplication.appModule.securitySettingsManager.setUserTier(current)
+    }
+}
+
+@Composable
+fun SystemIntegrityCard(systemStatus: String, isPremium: Boolean) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (systemStatus == "PASS") Color(0xFF22C55E).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, if (systemStatus == "PASS") Color(0xFF22C55E) else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                if (systemStatus == "PASS") Icons.Default.CheckCircle else Icons.Default.Security,
+                contentDescription = null,
+                tint = if (systemStatus == "PASS") Color(0xFF22C55E) else MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text("Integridade do Sistema", fontWeight = FontWeight.Bold)
+                Text("Módulos Ativos: ${if (isPremium) "FULL (STABLE)" else "BASE (LIMITED)"}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            }
+        }
+    }
+}
+
+@Composable
+fun FeatureMatrixSection(isPro: Boolean) {
+    Text("MATRIZ DE RECURSOS", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+    Spacer(Modifier.height(8.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            FeatureStatusRow("Motor de Captura C++", true)
+            FeatureStatusRow("Túnel Sentinel (VPN)", true)
+            FeatureStatusRow("Ads Reward System", !isPro)
+            FeatureStatusRow("Sincronização Fortinet", isPro)
+            FeatureStatusRow("Mapa Neural 3D", isPro)
+            FeatureStatusRow("Seleção de Interfaces", isPro)
+            FeatureStatusRow("Exportação de Logs", isPro)
+        }
+    }
+}
+
+@Composable
+fun FeatureStatusRow(label: String, isActive: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = if (isActive) Color.White else Color.Gray)
+        Icon(
+            if (isActive) Icons.Default.CheckCircle else Icons.Default.NoEncryption,
+            contentDescription = null,
+            tint = if (isActive) Color(0xFF22C55E) else Color.Gray,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
 

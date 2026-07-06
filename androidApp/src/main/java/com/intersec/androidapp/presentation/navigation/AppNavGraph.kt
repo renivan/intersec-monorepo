@@ -1,10 +1,13 @@
 package com.intersec.androidapp.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.intersec.androidapp.di.AppBootstrap
+import com.intersec.androidapp.presentation.screens.InitializationScreen
 import com.intersec.androidapp.presentation.screens.capture.CaptureRealtimeScreen
 import com.intersec.androidapp.presentation.screens.capture.ImportLogScreen
 import com.intersec.androidapp.presentation.screens.capture.MissionControlScreen
@@ -26,10 +29,23 @@ fun AppNavGraph(
     navController: NavHostController,
     analysisViewModel: AnalysisViewModel
 ) {
+    val state by analysisViewModel.uiState.collectAsState()
+    val isPro = state.userTier == 1
+
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.CAPTURE
+        startDestination = AppRoutes.INITIALIZATION
     ) {
+        composable(AppRoutes.INITIALIZATION) {
+            InitializationScreen(
+                onComplete = {
+                    navController.navigate(AppRoutes.CAPTURE) {
+                        popUpTo(AppRoutes.INITIALIZATION) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(AppRoutes.CAPTURE) {
             MissionControlScreen(
                 viewModel = analysisViewModel,
@@ -37,7 +53,7 @@ fun AppNavGraph(
                 onOpenFlows = { navController.navigate(AppRoutes.FLOWS) },
                 onOpenOverview = { navController.navigate(AppRoutes.OVERVIEW) },
                 onOpenSecurity = { navController.navigate(AppRoutes.SECURITY_REPORT) },
-                onOpenImportLog = { navController.navigate(AppRoutes.IMPORT_LOG) },
+                onOpenImportLog = { if (isPro) navController.navigate(AppRoutes.IMPORT_LOG) },
                 onOpenCaptureRealtime = { navController.navigate(AppRoutes.CAPTURE_REALTIME) },
                 onOpenSettings = { navController.navigate(AppRoutes.SETTINGS) }
             )
@@ -57,15 +73,17 @@ fun AppNavGraph(
                 onOpenPackets = { navController.navigate(AppRoutes.PACKETS) },
                 onOpenFlows = { navController.navigate(AppRoutes.FLOWS) },
                 onOpenSecurity = { navController.navigate(AppRoutes.SECURITY_REPORT) },
-                onOpenGeoMap = { navController.navigate(AppRoutes.GEO_MAP) }
+                onOpenGeoMap = { if (isPro) navController.navigate(AppRoutes.GEO_MAP) }
             )
         }
 
         composable(AppRoutes.GEO_MAP) {
-            Neural3DScreen(
-                viewModel = analysisViewModel,
-                onBack = { navController.popBackStack() }
-            )
+            if (isPro) {
+                Neural3DScreen(
+                    viewModel = analysisViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(AppRoutes.DIAGNOSTIC) {

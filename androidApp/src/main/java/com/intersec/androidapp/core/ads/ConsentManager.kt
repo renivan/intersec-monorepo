@@ -43,8 +43,12 @@ object ConsentManager {
                 }
             },
             { requestError ->
-                Log.e(TAG, "Falha ao solicitar info de consentimento: ${requestError.message}")
-                // Em caso de erro crítico, tentamos prosseguir de qualquer forma (fallback)
+                if (requestError.message.contains("Publisher misconfiguration")) {
+                    Log.w(TAG, "UMP: Publisher misconfiguration (Comum se Forms não configurados no console). Prosseguindo...")
+                } else {
+                    Log.e(TAG, "Falha ao solicitar info de consentimento: ${requestError.message}")
+                }
+                // Em caso de erro, tentamos prosseguir de qualquer forma (fallback)
                 onConsentGathered()
             }
         )

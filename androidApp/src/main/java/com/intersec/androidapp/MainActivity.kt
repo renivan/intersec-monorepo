@@ -26,14 +26,8 @@ class MainActivity : ComponentActivity() {
             val analysisViewModel: AnalysisViewModel = viewModel()
             val state by analysisViewModel.uiState.collectAsState()
 
-            // Inicia o fluxo de consentimento após o Compose estar pronto
-            androidx.compose.runtime.LaunchedEffect(Unit) {
-                ConsentManager.requestConsent(this@MainActivity) {
-                    MobileAds.initialize(this@MainActivity) {
-                        com.intersec.androidapp.core.ads.AdManager.preloadRewardedAd(this@MainActivity)
-                    }
-                }
-            }
+            // A inicialização agora é feita pela InitializationScreen/ViewModel
+            // para garantir um feedback profissional ao usuário.
 
             // Inicializa o gestor financeiro
             remember { 

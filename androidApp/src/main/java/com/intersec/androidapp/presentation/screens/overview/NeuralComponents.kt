@@ -83,15 +83,7 @@ fun NeuralMapVisual(modifier: Modifier, nodeCount: Int = 6) {
             }
         }
         
-        Text(
-            "SCAN ATIVO",
-            modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = primaryColor,
-            fontFamily = FontFamily.Default,
-            fontSize = 8.sp
-        )
+        // Sem rótulo SCAN ATIVO
     }
 }
 

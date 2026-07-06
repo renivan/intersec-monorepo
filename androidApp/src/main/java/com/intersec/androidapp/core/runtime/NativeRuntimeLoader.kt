@@ -5,12 +5,17 @@ object NativeRuntimeLoader {
     private var loaded: Boolean = false
 
     @Synchronized
-    fun ensureLoaded() {
-        if (loaded) return
+    fun ensureLoaded(): Boolean {
+        if (loaded) return true
 
-        // Ajuste este nome para o nome final da biblioteca nativa gerada/empacotada.
-        System.loadLibrary("wireshark_mobile_core")
-        loaded = true
+        return try {
+            System.loadLibrary("wireshark_mobile_core")
+            loaded = true
+            true
+        } catch (e: UnsatisfiedLinkError) {
+            android.util.Log.e("interSec_CORE", "ERRO CRÍTICO: Biblioteca nativa não encontrada!")
+            false
+        }
     }
 }
 

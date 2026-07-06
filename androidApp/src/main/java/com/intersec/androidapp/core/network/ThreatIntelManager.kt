@@ -16,7 +16,7 @@ object ThreatIntelManager {
      * Sincroniza a "Blacklist" do Firestore para o motor Native.
      * @param isPro Se true, baixa inteligência avançada.
      */
-    fun syncThreatFeeds(isPro: Boolean = false) {
+    fun syncThreatFeeds(isPro: Boolean = false, onComplete: (Boolean, String) -> Unit = { _, _ -> }) {
         try {
             val db = FirebaseFirestore.getInstance()
             val bridge = NativeBridgeClient()
@@ -28,19 +28,27 @@ object ThreatIntelManager {
                 .addOnSuccessListener { documents ->
                     val ipList = documents.mapNotNull { it.getString("ip") }
                     if (ipList.isNotEmpty()) {
-                        // Injeção direta no motor nativo interSec
                         val blob = ipList.joinToString(",").toByteArray()
                         val success = bridge.updateThreatDatabase(blob)
                         if (success) {
-                            Log.i(TAG, "Motor nativo blindado com ${ipList.size} assinaturas globais.")
+                            Log.i(TAG, "Motor nativo blindado com ${ipList.size} assinaturas.")
+                            onComplete(true, "${ipList.size} assinaturas injetadas.")
+                        } else {
+                            onComplete(false, "Falha de JNI ao injetar base.")
                         }
+                    } else {
+                        // Se vazio, tenta injetar um marcador de ativação
+                        bridge.updateThreatDatabase("ACTIVATED".toByteArray())
+                        onComplete(true, "Base ativada (Vazia).")
                     }
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "Falha na sincronização de inteligência: ${e.message}")
+                    Log.e(TAG, "Falha Firestore: ${e.message}")
+                    onComplete(false, "Erro Cloud Firestore: ${e.message}")
                 }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro crítico de inicialização de inteligência: ${e.message}")
+            Log.e(TAG, "Erro crítico: ${e.message}")
+            onComplete(false, "Exceção: ${e.message}")
         }
     }
 }

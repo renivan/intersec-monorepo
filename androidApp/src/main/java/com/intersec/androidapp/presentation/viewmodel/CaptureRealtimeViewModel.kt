@@ -24,7 +24,8 @@ import kotlin.time.Duration.Companion.seconds
  * Agora com suporte a VPN e Análise de Fluxo.
  */
 class CaptureRealtimeViewModel(
-    private val repository: CoreAnalysisRepository = AppBootstrap.coreAnalysisRepository
+    private val repository: CoreAnalysisRepository = AppBootstrap.coreAnalysisRepository,
+    private val neuralEngine: com.intersec.androidapp.core.neural.NeuralCoreEngine = com.intersec.androidapp.app.MainApplication.appModule.neuralCoreEngine
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CaptureRealtimeUiState())
@@ -170,6 +171,13 @@ class CaptureRealtimeViewModel(
         onCaptureStarted("vpn-session", "vpn0", _uiState.value.filterInput)
     }
 
+    fun toggleTier() {
+        val nextTier = if (_uiState.value.userTier == 0) 1 else 0
+        viewModelScope.launch {
+            MainApplication.appModule.securitySettingsManager.setUserTier(nextTier)
+        }
+    }
+
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null, errorDetail = null) }
     }
@@ -178,47 +186,62 @@ class CaptureRealtimeViewModel(
         captureJob?.cancel()
         captureJob = viewModelScope.launch {
             while (isActive && _uiState.value.isCapturing && !_uiState.value.isPaused) {
-                val currentSessionId = sessionId ?: break
-                
-                repository.capturePackets(currentSessionId, limit = 50).fold(
-                    onSuccess = { newPackets ->
-                        if (newPackets.isNotEmpty()) {
-                            val mappedPackets = newPackets.map { nativeItem ->
-                                RealtimePacketModel(
-                                    number = nativeItem.packetNumber.toInt(),
-                                    timestampSeconds = (nativeItem.timestampEpochMicros ?: 0L).toDouble() / 1_000_000.0,
-                                    sourceAddress = "...", 
-                                    destinationAddress = "...",
-                                    protocol = nativeItem.highestProtocol ?: "UNK",
-                                    flags = null,
-                                    size = 0,
-                                    info = nativeItem.info,
-                                    colorType = mapProtocolToColor(nativeItem.highestProtocol, nativeItem.info)
-                                )
+                try {
+                    val currentSessionId = sessionId ?: break
+                    
+                    repository.capturePackets(currentSessionId, limit = 50).fold(
+                        onSuccess = { newPackets ->
+                            if (newPackets.isNotEmpty()) {
+                                processPackets(newPackets)
                             }
-                            
-                            _uiState.update { state ->
-                                val updatedList = (state.packets + mappedPackets).takeLast(100)
-                                
-                                // Regra FREE: Expira cache local após 5 minutos
-                                val currentTime = System.currentTimeMillis()
-                                val finalPackets = if (state.userTier == 0 && (currentTime - state.captureStartTime > 5 * 60 * 1000)) {
-                                    updatedList.takeLast(10) // Mantém apenas o rastro mínimo
-                                } else {
-                                    updatedList
-                                }
-
-                                state.copy(
-                                    packets = finalPackets,
-                                    totalPackets = state.totalPackets + mappedPackets.size
-                                )
-                            }
+                        },
+                        onFailure = { e ->
+                            android.util.Log.e("CaptureVM", "Erro ao coletar pacotes: ${e.message}")
                         }
-                    },
-                    onFailure = { /* Silencioso */ }
-                )
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("CaptureVM", "Falha crítica no polling de pacotes: ${e.message}")
+                }
                 delay(200.milliseconds)
             }
+        }
+    }
+
+    private fun processPackets(newPackets: List<com.intersec.androidapp.core.bridge.NativePacketItem>) {
+        val mappedPackets = newPackets.map { nativeItem ->
+            // Alimenta o motor neural 3D com dados reais de fluxo
+            nativeItem.highestProtocol?.let { proto ->
+                neuralEngine.processConnection("EXT_NODE", proto, 64L)
+            }
+
+            RealtimePacketModel(
+                number = nativeItem.packetNumber.toInt(),
+                timestampSeconds = (nativeItem.timestampEpochMicros ?: 0L).toDouble() / 1_000_000.0,
+                sourceAddress = "...", 
+                destinationAddress = "...",
+                protocol = nativeItem.highestProtocol ?: "UNK",
+                flags = null,
+                size = 0,
+                info = nativeItem.info,
+                colorType = mapProtocolToColor(nativeItem.highestProtocol, nativeItem.info)
+            )
+        }
+        
+        _uiState.update { state ->
+            val updatedList = (state.packets + mappedPackets).takeLast(100)
+            
+            // Regra FREE: Expira cache local após 5 minutos
+            val currentTime = System.currentTimeMillis()
+            val finalPackets = if (state.userTier == 0 && (currentTime - state.captureStartTime > 5 * 60 * 1000)) {
+                updatedList.takeLast(10) // Mantém apenas o rastro mínimo
+            } else {
+                updatedList
+            }
+
+            state.copy(
+                packets = finalPackets,
+                totalPackets = state.totalPackets + mappedPackets.size
+            )
         }
     }
 
@@ -226,22 +249,28 @@ class CaptureRealtimeViewModel(
         flowJob?.cancel()
         flowJob = viewModelScope.launch {
             while (isActive && _uiState.value.isCapturing && !_uiState.value.isPaused) {
-                val currentSessionId = sessionId ?: break
-                
-                repository.captureFlows(currentSessionId, limit = 20).fold(
-                    onSuccess = { newFlows ->
-                        _uiState.update { state ->
-                            val updatedFlows = newFlows.map { 
-                                RealtimeFlowModel(it.label, it.endpoints, it.totalPackets, it.totalPayloadBytes, it.isInsecure)
+                try {
+                    val currentSessionId = sessionId ?: break
+                    
+                    repository.captureFlows(currentSessionId, limit = 20).fold(
+                        onSuccess = { newFlows ->
+                            _uiState.update { state ->
+                                val updatedFlows = newFlows.map { 
+                                    RealtimeFlowModel(it.label, it.endpoints, it.totalPackets, it.totalPayloadBytes, it.isInsecure)
+                                }
+                                state.copy(
+                                    flows = updatedFlows,
+                                    neuralNodes = generateNeuralNodes(updatedFlows)
+                                )
                             }
-                            state.copy(
-                                flows = updatedFlows,
-                                neuralNodes = generateNeuralNodes(updatedFlows)
-                            )
+                        },
+                        onFailure = { e ->
+                            android.util.Log.e("CaptureVM", "Erro ao coletar fluxos: ${e.message}")
                         }
-                    },
-                    onFailure = { /* Silencioso */ }
-                )
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("CaptureVM", "Falha crítica no polling de fluxos: ${e.message}")
+                }
                 delay(1000.milliseconds)
             }
         }

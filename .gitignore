@@ -21,3 +21,4 @@ local.properties
 *.p12
 *.keystore
 google-services.json
+keystore.properties

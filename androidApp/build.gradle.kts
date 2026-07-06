@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -16,14 +18,33 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        signingConfig = signingConfigs.getByName("debug")
+    }
+
+    signingConfigs {
+        create("release") {
+            val propertiesFile = rootProject.file("keystore.properties")
+            if (propertiesFile.exists()) {
+                val props = Properties()
+                props.load(propertiesFile.inputStream())
+                
+                val sFile = props.getProperty("storeFile")
+                if (sFile != null) {
+                    storeFile = file(sFile)
+                }
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Removendo referência a arquivo que causa erro no GCloud se não for achado
-            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -34,7 +55,7 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging = true
+            useLegacyPackaging = false
         }
     }
 
@@ -85,6 +106,7 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)

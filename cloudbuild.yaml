@@ -2,7 +2,18 @@
 # Utiliza imagem customizada com Android SDK pré-instalado para builds ultra-rápidos
 
 steps:
-  # 0. Recuperar segredos do Secret Manager
+  # 0. Restaurar Cache do Gradle (Opcional - Melhora desempenho)
+  - name: 'gcr.io/cloud-builders/gsutil'
+    id: 'restore-cache'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gsutil cp gs://${_ARTIFACT_BUCKET}/cache/gradle-cache.tar.gz gradle-cache.tar.gz || exit 0
+        [ -f gradle-cache.tar.gz ] && mkdir -p .gradle/caches/ && tar -xzf gradle-cache.tar.gz -C ./ || exit 0
+        rm -f gradle-cache.tar.gz
+
+  # 0. Recuperar segredos do Secret Gestor
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'fetch-secrets'
     entrypoint: 'bash'
@@ -11,10 +22,13 @@ steps:
       - |
         mkdir -p androidApp
         gcloud secrets versions access latest --secret="google-services-json" > androidApp/google-services.json
+        gcloud secrets versions access latest --secret="release-keystore" > androidApp/release.keystore
+        gcloud secrets versions access latest --secret="keystore-properties" > keystore.properties
 
   # 1. Compilação usando a imagem customizada do interSec
   - name: 'us-central1-docker.pkg.dev/intersec-56328/intersec-images/android-builder:v1'
     id: 'gradle-build'
+    waitFor: ['fetch-secrets', 'restore-cache']
     entrypoint: 'bash'
     args:
       - '-c'
@@ -22,10 +36,35 @@ steps:
         chmod +x gradlew
         ./gradlew clean :shared:assemble :androidApp:bundleRelease :androidApp:assembleRelease -Dorg.gradle.jvmargs="-Xmx4096m"
 
-# Performance e Logs
+  # 2. Limpeza de arquivos sensíveis pós-build
+  - name: 'bash'
+    id: 'cleanup'
+    waitFor: ['gradle-build']
+    allowFailure: true
+    args:
+      - '-c'
+      - |
+        rm androidApp/release.keystore
+        rm androidApp/google-services.json
+        rm keystore.properties
+
+  # 3. Salvar Cache do Gradle para o próximo build
+  - name: 'gcr.io/cloud-builders/gsutil'
+    id: 'save-cache'
+    waitFor: ['gradle-build', 'cleanup']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        [ -d .gradle/caches ] && tar -czf gradle-cache.tar.gz .gradle/caches/ --exclude="*.lock" --exclude="gc.properties"
+        [ -f gradle-cache.tar.gz ] && gsutil cp gradle-cache.tar.gz gs://${_ARTIFACT_BUCKET}/cache/gradle-cache.tar.gz
+        rm -f gradle-cache.tar.gz
+
+# Desempenho e Logs
 options:
   machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
+timeout: 1800s
 
 # Armazenamento de Artefatos (AAB e APK)
 artifacts:
@@ -34,6 +73,7 @@ artifacts:
     paths:
       - 'androidApp/build/outputs/bundle/release/*.aab'
       - 'androidApp/build/outputs/apk/release/*.apk'
+      - 'shared/build/outputs/**/*.aar'
 
 # Variável de Bucket (Certifique-se de configurar no Gatilho/Trigger do Cloud Build)
 substitutions:

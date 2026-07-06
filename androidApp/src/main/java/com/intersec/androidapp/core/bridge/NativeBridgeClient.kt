@@ -10,24 +10,25 @@ import dalvik.annotation.optimization.FastNative
 class NativeBridgeClient(
     private val loader: NativeRuntimeLoader = NativeRuntimeLoader,
 ) {
+    private fun isLoaded() = loader.ensureLoaded()
 
     fun ping(): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.pingNative()
     }
 
     fun openCapture(path: String): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.openCaptureNative(path, System.currentTimeMillis() * 1000L)
     }
 
     fun snapshotActive(): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.snapshotActiveNative()
     }
 
     fun queryPackets(query: NativePacketQuery): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.queryPacketsNative(
             protocol = query.protocol,
             host = query.host,
@@ -39,7 +40,7 @@ class NativeBridgeClient(
     }
 
     fun queryFlows(query: NativeFlowQuery): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.queryFlowsNative(
             protocol = query.protocol,
             host = query.host,
@@ -51,37 +52,37 @@ class NativeBridgeClient(
     }
 
     fun getPackets(): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.queryPacketsNative(null, null, null, -1L, 0, Int.MAX_VALUE)
     }
 
     fun getFlows(): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.queryFlowsNative(null, null, -1, null, 0, Int.MAX_VALUE)
     }
 
     fun startCapture(networkInterface: String, filter: String = ""): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.startCaptureNative(networkInterface, filter)
     }
 
     fun stopCapture(sessionId: String): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.stopCaptureNative(sessionId)
     }
 
     fun capturePackets(sessionId: String, limit: Int = 100): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.capturePacketsNative(sessionId, limit)
     }
 
     fun getCaptureOverview(): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.getCaptureOverviewNative()
     }
 
     fun runFullSystemTest(): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.runFullSystemTestNative()
     }
 
@@ -89,7 +90,7 @@ class NativeBridgeClient(
      * Entrega o controle do tÃºnel VPN para o motor Native.
      */
     fun attachVpnTunnel(fd: Int): Boolean {
-        loader.ensureLoaded()
+        if (!isLoaded()) return false
         return Native.attachVpnTunnelNative(fd)
     }
 
@@ -97,7 +98,7 @@ class NativeBridgeClient(
      * Atualiza a base de dados de ameaÃ§as globais (DPI Master).
      */
     fun updateThreatDatabase(data: ByteArray): Boolean {
-        loader.ensureLoaded()
+        if (!isLoaded()) return false
         return Native.updateThreatDatabaseNative(data)
     }
 
@@ -105,17 +106,17 @@ class NativeBridgeClient(
      * Simula um pacote e retorna o veredito de seguranÃ§a do motor.
      */
     fun simulateAttack(data: ByteArray): String {
-        loader.ensureLoaded()
+        if (!isLoaded()) return "ERROR: NATIVE_NOT_LOADED"
         return Native.simulateAttackNative(data)
     }
 
     fun updateSecuritySettings(level: Int, smartShield: Boolean, killSwitch: Boolean): Boolean {
-        loader.ensureLoaded()
+        if (!isLoaded()) return false
         return Native.updateSecuritySettingsNative(level, smartShield, killSwitch)
     }
 
     fun activatePremiumFeatures(token: String): Boolean {
-        loader.ensureLoaded()
+        if (!isLoaded()) return false
         return Native.activatePremiumFeaturesNative(token)
     }
 
