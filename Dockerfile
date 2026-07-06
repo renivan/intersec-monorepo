@@ -1,28 +1,16 @@
-# Imagem base com Java 17 (Ubuntu Jammy)
-FROM eclipse-temurin:17-jdk-jammy
+# Otimizado v2: Baseado na v1 estável
+FROM us-central1-docker.pkg.dev/intersec-56328/intersec-images/android-builder:v1
 
-# Instalar dependências necessárias do sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget unzip git lib32stdc++6 lib32z1 && \
-    rm -rf /var/lib/apt/lists/*
-
-# Configurar diretório do SDK
-ENV ANDROID_HOME=/opt/android-sdk
-ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
-
-# Baixar e instalar Android Command Line Tools
-RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
-    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O sdk.zip && \
-    unzip -q sdk.zip -d ${ANDROID_HOME}/cmdline-tools && \
-    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
-    rm sdk.zip
-
-# Aceitar licenças e instalar componentes (Android 34-35)
-RUN yes | sdkmanager --licenses > /dev/null && \
+# Atualiza o SDK Manager e instala as versões 36 e 37 para evitar downloads no build
+# Incluímos as versões conhecidas para garantir a velocidade e estabilidade.
+# Nota: Caso o canal estável do Google não possua a API 37 ainda, o comando pode falhar.
+RUN yes | sdkmanager --licenses && \
     sdkmanager "platform-tools" \
-               "platforms;android-34" \
                "platforms;android-35" \
-               "build-tools;34.0.0" \
-               "build-tools;35.0.0"
+               "platforms;android-36" \
+               "build-tools;35.0.0" \
+               "build-tools;36.0.0" \
+               "build-tools;36.1.0"
 
-WORKDIR /workspace
+# Garante permissões totais para o Gradle operar no SDK
+RUN chmod -R 777 $ANDROID_HOME

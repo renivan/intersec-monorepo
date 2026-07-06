@@ -1,9 +1,9 @@
 # Google Cloud Build - interSec Pipeline (Otimizado v5)
-# Utiliza imagem customizada v1 com Secret Manager
+# Utiliza imagem customizada v2 com Secret Manager e SDKs pré-instalados
 
 steps:
-  # 1. Compilação usando a imagem customizada v1
-  - name: 'us-central1-docker.pkg.dev/intersec-56328/intersec-images/android-builder:v1'
+  # 1. Compilação usando a imagem customizada v2
+  - name: 'us-central1-docker.pkg.dev/intersec-56328/intersec-images/android-builder:v2'
     id: 'gradle-build'
     entrypoint: 'bash'
     args:
