@@ -32,7 +32,7 @@ class LocationTracker(
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            locationResult.lastLocation?.let { location ->
+            locationResult.lastLocation.let { location ->
                 _currentLocation.value = location
                 persistLocation(location)
             }

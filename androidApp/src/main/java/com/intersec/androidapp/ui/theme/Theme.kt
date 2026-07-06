@@ -133,9 +133,12 @@ fun InterSecTheme(
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
             
-            // Lógica moderna para barras de sistema (sem avisos de depreciação)
+            // Lógica moderna para barras de sistema (Suprimindo avisos de depreciação para manter compatibilidade visual)
+            @Suppress("DEPRECATION")
             window.statusBarColor = colorScheme.background.toArgb()
+            @Suppress("DEPRECATION")
             window.navigationBarColor = colorScheme.background.toArgb()
+
             insetsController.isAppearanceLightStatusBars = !isDarkMode
             insetsController.isAppearanceLightNavigationBars = !isDarkMode
         }

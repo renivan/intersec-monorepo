@@ -1,64 +1,26 @@
-# Google Cloud Build - interSec Pipeline (Otimizado v3)
-# Utiliza imagem customizada com Android SDK pré-instalado para builds ultra-rápidos
+# Google Cloud Build - interSec Pipeline (Otimizado v4)
+# Utiliza integração nativa com Secret Manager para máxima segurança
 
 steps:
-  # 0. Restaurar Cache do Gradle (Opcional - Melhora desempenho)
-  - name: 'gcr.io/cloud-builders/gsutil'
-    id: 'restore-cache'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        gsutil cp gs://${_ARTIFACT_BUCKET}/cache/gradle-cache.tar.gz gradle-cache.tar.gz || exit 0
-        [ -f gradle-cache.tar.gz ] && mkdir -p .gradle/caches/ && tar -xzf gradle-cache.tar.gz -C ./ || exit 0
-        rm -f gradle-cache.tar.gz
-
-  # 0. Recuperar segredos do Secret Gestor
-  - name: 'gcr.io/cloud-builders/gcloud'
-    id: 'fetch-secrets'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        mkdir -p androidApp
-        gcloud secrets versions access latest --secret="google-services-json" > androidApp/google-services.json
-        gcloud secrets versions access latest --secret="release-keystore" > androidApp/release.keystore
-        gcloud secrets versions access latest --secret="keystore-properties" > keystore.properties
-
-  # 1. Compilação usando a imagem customizada do interSec
+  # 1. Compilação usando a imagem customizada com injeção automática de segredos
   - name: 'us-central1-docker.pkg.dev/intersec-56328/intersec-images/android-builder:v1'
     id: 'gradle-build'
-    waitFor: ['fetch-secrets', 'restore-cache']
     entrypoint: 'bash'
     args:
       - '-c'
       - |
+        # Injeta o arquivo de serviços do Google a partir da variável de ambiente
+        echo "$$GOOGLE_SERVICES_JSON" > androidApp/google-services.json
+        
         chmod +x gradlew
         ./gradlew clean :shared:assemble :androidApp:bundleRelease :androidApp:assembleRelease -Dorg.gradle.jvmargs="-Xmx4096m"
+    secretEnv: ['GOOGLE_SERVICES_JSON']
 
-  # 2. Limpeza de arquivos sensíveis pós-build
-  - name: 'bash'
-    id: 'cleanup'
-    waitFor: ['gradle-build']
-    allowFailure: true
-    args:
-      - '-c'
-      - |
-        rm androidApp/release.keystore
-        rm androidApp/google-services.json
-        rm keystore.properties
-
-  # 3. Salvar Cache do Gradle para o próximo build
-  - name: 'gcr.io/cloud-builders/gsutil'
-    id: 'save-cache'
-    waitFor: ['gradle-build', 'cleanup']
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        [ -d .gradle/caches ] && tar -czf gradle-cache.tar.gz .gradle/caches/ --exclude="*.lock" --exclude="gc.properties"
-        [ -f gradle-cache.tar.gz ] && gsutil cp gradle-cache.tar.gz gs://${_ARTIFACT_BUCKET}/cache/gradle-cache.tar.gz
-        rm -f gradle-cache.tar.gz
+# Definição da integração nativa com o Secret Manager
+availableSecrets:
+  secretManager:
+  - versionName: projects/intersec-56328/secrets/google-services-json/versions/latest
+    env: 'GOOGLE_SERVICES_JSON'
 
 # Desempenho e Logs
 options:
@@ -75,6 +37,6 @@ artifacts:
       - 'androidApp/build/outputs/apk/release/*.apk'
       - 'shared/build/outputs/**/*.aar'
 
-# Variável de Bucket (Certifique-se de configurar no Gatilho/Trigger do Cloud Build)
+# Variáveis (Certifique-se de configurar no Gatilho do Cloud Build)
 substitutions:
   _ARTIFACT_BUCKET: 'intersec-artifacts-build'
