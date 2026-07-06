@@ -17,8 +17,12 @@ RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
     mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
     rm sdk.zip
 
-# Aceitar licenças e instalar componentes (Android 34/35)
+# Aceitar licenças e instalar componentes (Android 34-35)
 RUN yes | sdkmanager --licenses > /dev/null && \
-    sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+    sdkmanager "platform-tools" \
+               "platforms;android-34" \
+               "platforms;android-35" \
+               "build-tools;34.0.0" \
+               "build-tools;35.0.0"
 
 WORKDIR /workspace
