@@ -9,6 +9,7 @@ import com.intersec.androidapp.core.ads.ConsentManager
 import com.intersec.androidapp.core.runtime.NativeRuntimeLoader
 import com.intersec.androidapp.core.network.ThreatIntelManager
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Registry de Módulos: Controla o carregamento seletivo de órgãos do sistema
@@ -53,14 +54,14 @@ object ModuleRegistry {
         // 1. Inteligência de Ameaças em Tempo Real
         ThreatIntelManager.syncThreatFeeds(isPro = true)
         isAdvancedAnalyticsReady = true
-        delay(200)
+        delay(200.milliseconds)
 
         // 2. Pré-aquecimento do Motor Neural 3D
         // Aqui poderíamos inicializar shaders ou texturas do SceneView
         isNeural3DReady = true
-        delay(200)
+        delay(200.milliseconds)
 
-        // 3. Otimização da Stack de VPN para alta performance
+        // 3. Otimização da Stack de VPN para alta performace
         isVpnStackReady = true
         Log.i(TAG, "Sistema PRO totalmente operacional.")
     }

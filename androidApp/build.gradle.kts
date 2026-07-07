@@ -8,11 +8,13 @@ plugins {
 
 android {
     namespace = "com.intersec.androidapp"
+    //noinspection GradleDependency
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.intersec.androidapp"
         minSdk = 24
+        //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"

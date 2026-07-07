@@ -1,4 +1,6 @@
-﻿package com.intersec.androidapp.core.network
+﻿@file:Suppress("unused", "unused", "unused")
+
+package com.intersec.androidapp.core.network
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
@@ -8,6 +10,7 @@ import com.intersec.androidapp.core.bridge.NativeBridgeClient
  * ThreatIntelManager: Gerencia a sincronização de bases de dados de ameaças via Firestore.
  * Conecta-se ao repositório global e blinda o motor nativo em tempo real.
  */
+@Suppress("unused", "unused", "unused", "unused", "unused", "unused")
 object ThreatIntelManager {
     private const val TAG = "interSec_INTEL"
     var isTestEnvironment: Boolean = false

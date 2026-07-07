@@ -6,16 +6,52 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,8 +65,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 import io.github.sceneview.SceneView
+import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Scale
 import io.github.sceneview.node.ModelNode
+import io.github.sceneview.node.SphereNode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -38,7 +77,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Sentinel 3D HUD: Interface imersiva baseada em Google Filament.
- * Otimizado para SceneView 2.2.1 (Estável para SDK 35)
+ * Otimizado para SceneView 2.2.1
  */
 @Composable
 fun Neural3DScreen(
@@ -60,9 +99,13 @@ fun Neural3DContent(
     var currentTime by remember { mutableStateOf("") }
     
     // Estados de Controle 3D
-    var rotationY by remember { mutableStateOf(0f) }
-    var rotationX by remember { mutableStateOf(0f) }
-    var zoomScale by remember { mutableStateOf(0.4f) }
+    var rotationY by remember { mutableFloatStateOf(0f) }
+    var rotationX by remember { mutableFloatStateOf(0f) }
+    var zoomScale by remember { mutableFloatStateOf(1.0f) }
+
+    // Referência estável para o nó do globo para o bloco update
+    var earthNodeReference by remember { mutableStateOf<ModelNode?>(null) }
+    val neuralNodesMap = remember { mutableMapOf<String, SphereNode>() }
 
     // Atualização do Relógio Sentinel
     LaunchedEffect(Unit) {
@@ -74,41 +117,68 @@ fun Neural3DContent(
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         
-        // --- ÁREA DE CLIQUE PARA DESELECIONAR ---
+        // --- Área de clique para Desmarcar ---
         Box(modifier = Modifier.fillMaxSize().clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null
         ) { viewModel?.inspectNeuralLink(null) })
 
-        // --- CAMADA 1: MOTOR 3D FILAMENT (SceneView 2.2.1) ---
+        // --- CAMADA 1: MOTOR 3D FILAMENT ---
         val isLoadingModel = remember { mutableStateOf(true) }
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
-                val sceneView = SceneView(context)
-                sceneView.apply {
+                SceneView(context).apply {
+                    cameraManipulator = null 
                     modelLoader.loadModelAsync(
                         fileLocation = "models/earth.glb",
                         onResult = { modelInstance ->
                             isLoadingModel.value = false
                             modelInstance?.let { asset ->
-                                val earthNode = ModelNode(
+                                val node = ModelNode(
                                     modelInstance = asset.instance,
-                                    scaleToUnits = zoomScale
+                                    scaleToUnits = 1.0f
                                 ).apply {
                                     name = "earth"
                                 }
-                                addChildNode(earthNode)
+                                earthNodeReference = node
+                                addChildNode(node)
                             }
                         }
                     )
                 }
-                sceneView
             },
-            update = { view -> 
-                view.childNodes.filterIsInstance<ModelNode>().firstOrNull { it.name == "earth" }?.let { earth ->
-                    earth.rotation = Rotation(x = rotationX, y = rotationY)
-                    earth.scale = io.github.sceneview.math.Position(zoomScale)
+            update = { sceneView -> 
+                
+                // sincroniza o Globo Principal
+                earthNodeReference?.let { node ->
+                    node.rotation = Rotation(x = rotationX, y = rotationY, z = 0f)
+                    node.scale = Scale(zoomScale, zoomScale, zoomScale)
+                }
+
+                // sincroniza Nódulos Neurais
+                val currentIds = state.neuralLinks.map { it.id }.toSet()
+                neuralNodesMap.keys.toList().forEach { id ->
+                    if (id !in currentIds) {
+                        neuralNodesMap.remove(id)?.let { sceneView.removeChildNode(it) }
+                    }
+                }
+
+                state.neuralLinks.forEach { link ->
+                    val node = neuralNodesMap.getOrPut(link.id) {
+                        SphereNode(
+                            engine = sceneView.engine,
+                            radius = 0.05f
+                        ).apply {
+                            sceneView.addChildNode(this)
+                        }
+                    }
+                    node.position = Position(
+                        x = (link.x * zoomScale),
+                        y = (link.y * zoomScale),
+                        z = (link.z * zoomScale)
+                    )
+                    node.rotation = Rotation(rotationX, rotationY, 0f)
                 }
             }
         )
@@ -127,7 +197,7 @@ fun Neural3DContent(
                     .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
                     .padding(12.dp)
             ) {
-                TechnicalInfoItem("Usuário", "ADMIN_ANALSYT")
+                TechnicalInfoItem("Usuário", "ADMIN_ANALYST")
                 TechnicalInfoItem("HORÁRIO", currentTime)
                 TechnicalInfoItem("License", "SENTINEL_PRO_v3")
                 TechnicalInfoItem("NODES", state.neuralLinks.size.toString())
@@ -148,7 +218,7 @@ fun Neural3DContent(
             }
         }
 
-        // --- CAMADA 4: CONTROLES SUPERIORES ---
+        // --- CAMADA 4: Controles superiores ---
         CenterAlignedTopAppBar(
             title = { Text("NEURAL SENTINEL 3D", color = Color.Cyan, fontWeight = FontWeight.Black, fontSize = 14.sp) },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -164,7 +234,7 @@ fun Neural3DContent(
             }
         )
 
-        // --- CAMADA 5: CONTROLES DE NAVEGAÇÃO VERTICAIS E TRANSLÚCIDOS ---
+        // --- CAMADA 5: Controles DE NAVEGAÇÃO Verticais E TRANSLÚCIDOS ---
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -173,20 +243,25 @@ fun Neural3DContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
+            // 1. Controle Azimutal (D-PAD)
             Box(modifier = Modifier.size(110.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(color = Color.Cyan.copy(alpha = 0.05f))
                 }
-                DirectionalButton(Icons.Default.ArrowDropUp, Modifier.align(Alignment.TopCenter)) { rotationX = (rotationX - 10f) % 360f }
-                DirectionalButton(Icons.Default.ArrowDropDown, Modifier.align(Alignment.BottomCenter)) { rotationX = (rotationX + 10f) % 360f }
-                DirectionalButton(Icons.AutoMirrored.Filled.ArrowLeft, Modifier.align(Alignment.CenterStart)) { rotationY = (rotationY - 10f) % 360f }
-                DirectionalButton(Icons.AutoMirrored.Filled.ArrowRight, Modifier.align(Alignment.CenterEnd)) { rotationY = (rotationY + 10f) % 360f }
+                DirectionalButton(Icons.Default.ArrowDropUp, Modifier.align(Alignment.TopCenter)) { rotationX -= 10f }
+                DirectionalButton(Icons.Default.ArrowDropDown, Modifier.align(Alignment.BottomCenter)) { rotationX += 10f }
+                DirectionalButton(Icons.AutoMirrored.Filled.ArrowLeft, Modifier.align(Alignment.CenterStart)) { rotationY -= 10f }
+                DirectionalButton(Icons.AutoMirrored.Filled.ArrowRight, Modifier.align(Alignment.CenterEnd)) { rotationY += 10f }
                 Text("D-PAD", modifier = Modifier.align(Alignment.Center), color = Color.Cyan.copy(alpha = 0.4f), fontSize = 8.sp, fontWeight = FontWeight.Black)
             }
 
+            // 2. Barra de Rotação X
             VerticalControlBar("ROT X", rotationX, -180f..180f, Color.Cyan) { rotationX = it }
+
+            // 3. Barra de Rotação Y
             VerticalControlBar("ROT Y", rotationY, -180f..180f, Color.Cyan) { rotationY = it }
 
+            // 4. Barra Central de Playback (Vertical)
             Column(
                 modifier = Modifier
                     .height(110.dp)
@@ -201,7 +276,8 @@ fun Neural3DContent(
                 PlaybackIcon(Icons.Default.SkipNext)
             }
 
-            VerticalControlBar("ZOOM", zoomScale, 0.05f..1.5f, Color.White) { zoomScale = it }
+            // 5. Barra de Zoom
+            VerticalControlBar("ZOOM", zoomScale, 0.1f..3.0f, Color.White) { zoomScale = it }
         }
 
         // --- CAMADA 6: PAINEL DE INSPEÇÃO PROFUNDA (DPI) ---
@@ -227,7 +303,7 @@ fun Neural3DContent(
                         }
                     }
                     Spacer(Modifier.height(12.dp))
-                    Text("DESTINO: ${link.destIp}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
+                    Text("Destino: ${link.destIp}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
                     Text("GEO: ${link.city}, ${link.countryCode}", color = Color.LightGray, fontSize = 10.sp)
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.Cyan.copy(alpha = 0.2f))
                     if (state.inspectedPacketPayload == null) {

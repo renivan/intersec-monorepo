@@ -8,6 +8,7 @@ import com.intersec.androidapp.presentation.viewmodel.AnalysisViewModel
 /**
  * BillingManager: Responsável pela ponte financeira com o Google Play.
  * Gerencia assinaturas e validação de perfil PRO.
+ * Otimizado para Billing 7.0.0
  */
 class BillingManager(
     private val activity: Activity,
@@ -18,7 +19,7 @@ class BillingManager(
     
     private val billingClient = BillingClient.newBuilder(activity)
         .setListener(this)
-        .enablePendingPurchases()
+        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
         .build()
 
     init {
@@ -68,33 +69,31 @@ class BillingManager(
             .setProductList(productList)
             .build()
 
-        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
-            override fun onProductDetailsResponse(billingResult: BillingResult, productDetailsList: List<ProductDetails>) {
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
-                    val details = productDetailsList[0]
-                    val offers = details.subscriptionOfferDetails
-                    var offerToken = ""
-                    if (!offers.isNullOrEmpty()) {
-                        offerToken = offers!![0].offerToken
-                    }
-                    
-                    val productDetailsParamsList = listOf(
-                        BillingFlowParams.ProductDetailsParams.newBuilder()
-                            .setProductDetails(details)
-                            .setOfferToken(offerToken)
-                            .build()
-                    )
-
-                    val flowParams = BillingFlowParams.newBuilder()
-                        .setProductDetailsParamsList(productDetailsParamsList)
-                        .build()
-
-                    billingClient.launchBillingFlow(activity, flowParams)
-                } else {
-                    Log.e(TAG, "Erro ao buscar detalhes do produto: ${billingResult.debugMessage}")
+        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
+                val details = productDetailsList[0]
+                val offers = details.subscriptionOfferDetails
+                var offerToken = ""
+                if (!offers.isNullOrEmpty()) {
+                    offerToken = offers[0].offerToken
                 }
+                
+                val productDetailsParamsList = listOf(
+                    BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(details)
+                        .setOfferToken(offerToken)
+                        .build()
+                )
+
+                val flowParams = BillingFlowParams.newBuilder()
+                    .setProductDetailsParamsList(productDetailsParamsList)
+                    .build()
+
+                billingClient.launchBillingFlow(activity, flowParams)
+            } else {
+                Log.e(TAG, "Erro ao buscar detalhes do produto: ${billingResult.debugMessage}")
             }
-        })
+        }
     }
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {

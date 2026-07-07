@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 class InitializationViewModel : ViewModel() {
 
@@ -68,7 +69,7 @@ class InitializationViewModel : ViewModel() {
                     _uiState.update { it.copy(status = "Limpando artefatos de sessões antigas...", progress = 0.55f) }
                     val artifactsFound = DeepIntegrityScanner.scanLegacyArtifacts(context)
                     if (artifactsFound > 0) {
-                        delay(500)
+                        delay(500.milliseconds)
                     }
 
                     _uiState.update { it.copy(status = "Validando barramento de eventos neurais...", progress = 0.75f) }

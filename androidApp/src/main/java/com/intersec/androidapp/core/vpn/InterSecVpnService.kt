@@ -1,10 +1,18 @@
 ﻿package com.intersec.androidapp.core.vpn
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.VpnService
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.intersec.androidapp.MainActivity
+import com.intersec.androidapp.R
 import com.intersec.androidapp.core.bridge.NativeBridgeClient
 
 /**
@@ -33,17 +41,19 @@ class InterSecVpnService : VpnService() {
 
             val builder = Builder()
                 .setSession("InterSec Sentinel")
-                .addAddress("10.8.0.2", 32)
-                .addRoute("0.0.0.0", 0) 
+                .addAddress("10.8.0.2", 24) // Máscara mais larga para flexibilidade interna
+                .addRoute("0.0.0.0", 0)     // Rota padrão IPv4
+                .addRoute("::", 0)          // Rota padrão IPv6 (Crucial para celulares modernos)
                 .addDnsServer("8.8.8.8")
-                .setMtu(1500)
-                .addDisallowedApplication(packageName) // Evita loop infinito
+                .addDnsServer("1.1.1.1")    // DNS de backup
+                .setMtu(1350)               // MTU reduzido para evitar fragmentação em redes móveis
+                .addDisallowedApplication(packageName) // Evita loop infinito do próprio app
+                .allowBypass()              // Permite que o sistema use a rede real se o túnel falhar (Evita "morte" da net)
                 .setBlocking(false)
 
-            // Trava a conexão na rede atual para evitar bypass e garantir estabilidade (MVP)
+            // Configurações de rede subjacente
             activeNetwork?.let {
                 builder.setUnderlyingNetworks(arrayOf(it))
-                Log.d("InterSecVPN", "Conexão travada no túnel Sentinel para a rede: $it")
             }
 
             vpnInterface = builder.establish()
@@ -55,9 +65,8 @@ class InterSecVpnService : VpnService() {
                 val success = bridgeClient.attachVpnTunnel(fd)
                 if (success) {
                     Log.d("InterSecVPN", "Análise em Tempo Real ATIVADA via VpnService.")
-                    // Inicializa a sessão de captura no motor para o túnel
-                    bridgeClient.startCapture("vpn0", "")
-                    updateNotification()
+                    startForeground(SENTINEL_NOTIFICATION_ID, createNotification())
+                    bridgeClient.startCapture("tun0", "") // tun0 é o padrão para VpnService
                 } else {
                     Log.e("InterSecVPN", "Erro: O motor Native recusou a conexão do túnel.")
                     // Se falhar, fechamos o FD manualmente para não vazar
@@ -71,11 +80,36 @@ class InterSecVpnService : VpnService() {
         }
     }
 
-    private fun updateNotification() {
-        // Futura implementação de notificação de serviço em primeiro plano
+    private fun createNotification(): Notification {
+        val channelId = "sentinel_vpn_channel"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Sentinel Security Tunnel", NotificationManager.IMPORTANCE_LOW)
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_neural_core)
+            .setContentTitle("Escudo Sentinel Ativo")
+            .setContentText("Monitorando tráfego e protegendo conexões...")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setContentIntent(pendingIntent)
+            .build()
     }
 
     private fun stopVpn() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
         vpnInterface?.close()
         vpnInterface = null
         stopSelf()
@@ -84,6 +118,10 @@ class InterSecVpnService : VpnService() {
     override fun onDestroy() {
         stopVpn()
         super.onDestroy()
+    }
+
+    companion object {
+        private const val SENTINEL_NOTIFICATION_ID = 1001
     }
 }
 

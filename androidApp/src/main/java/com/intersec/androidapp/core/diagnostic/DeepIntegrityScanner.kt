@@ -6,6 +6,7 @@ import android.util.Log
 import com.intersec.androidapp.app.MainApplication
 import kotlinx.coroutines.delay
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Scanner de Integridade Profunda.
@@ -63,7 +64,7 @@ object DeepIntegrityScanner {
      */
     suspend fun testNeuralBus(): Boolean {
         // Testa se o motor neural consegue processar um sinal de teste
-        delay(200)
+        delay(200.milliseconds)
         return true
     }
 }

@@ -99,6 +99,7 @@ fun formatVolume(bytes: Long): String {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaptureRealtimeScreen(
     viewModel: CaptureRealtimeViewModel = viewModel(),
@@ -709,6 +710,7 @@ fun PacketsListSection(state: CaptureRealtimeUiState) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FlowsList(state: CaptureRealtimeUiState) {
     LazyColumn(
