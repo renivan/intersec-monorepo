@@ -51,9 +51,20 @@ class MainApplication : Application() {
 
     private fun isEmulator(): Boolean {
         val model = android.os.Build.MODEL
-        return model.contains("sdk", ignoreCase = true) || 
-               model.contains("Emulator", ignoreCase = true) || 
-               android.os.Build.BRAND.startsWith("generic") && android.os.Build.DEVICE.startsWith("generic") ||
-               "google_sdk" == android.os.Build.PRODUCT
+        val brand = android.os.Build.BRAND
+        val device = android.os.Build.DEVICE
+        val product = android.os.Build.PRODUCT
+        val hardware = android.os.Build.HARDWARE
+        val fingerprint = android.os.Build.FINGERPRINT
+
+        return model.contains("sdk", ignoreCase = true) ||
+               model.contains("Emulator", ignoreCase = true) ||
+               brand.startsWith("generic") && device.startsWith("generic") ||
+               fingerprint.startsWith("generic") ||
+               fingerprint.startsWith("unknown") ||
+               product == "google_sdk" ||
+               product == "sdk_gphone_x86" ||
+               hardware == "goldfish" ||
+               hardware == "ranchu"
     }
 }

@@ -3,9 +3,9 @@
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.intersec.androidapp.di.AppBootstrap
-import com.intersec.androidapp.presentation.state.CaptureActionUiState
-import com.intersec.androidapp.presentation.state.ActionType
 import com.intersec.androidapp.presentation.state.ActionStatus
+import com.intersec.androidapp.presentation.state.ActionType
+import com.intersec.androidapp.presentation.state.CaptureActionUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -133,6 +133,8 @@ class CaptureActionsViewModel : ViewModel() {
     }
 
     fun exportCapture() {
+        val sessionId = _uiState.value.currentSessionId ?: return
+
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -142,7 +144,7 @@ class CaptureActionsViewModel : ViewModel() {
                 )
             }
 
-            // TODO: Implementar exportaÃ§Ã£o PCAP/JSON
+            // TODO: Implementar exportação PCAP/JSON
             _uiState.update {
                 it.copy(
                     isLoading = false,

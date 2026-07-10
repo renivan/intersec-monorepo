@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.intersec.androidapp">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -30,6 +32,9 @@
     <queries>
         <package android:name="com.android.vending" />
         <package android:name="com.google.android.gms" />
+        <intent>
+            <action android:name="com.google.android.gms.ads.AD_MANAGER_BUNDLE" />
+        </intent>
     </queries>
 
     <application
@@ -46,6 +51,10 @@
         android:largeHeap="true">
 
         <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4865121565284201~3081076016" />
 
@@ -53,7 +62,7 @@
         <activity
             android:name="com.google.android.gms.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:hardwareAccelerated="false"
+            android:hardwareAccelerated="true"
             tools:replace="android:hardwareAccelerated" />
 
         <activity
